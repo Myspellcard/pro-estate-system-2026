@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isProtectedOwner() {
+      return resource.data.role == "owner" || resource.data.email == "myspellcard@gmail.com";
+    }
+
+    match /users/{userId} {
+      allow read, create, update: if signedIn();
+      allow delete: if signedIn() && !isProtectedOwner();
+    }
+    match /User/{userId} {
+      allow read, create, update: if signedIn();
+      allow delete: if signedIn() && !isProtectedOwner();
+    }
+    match /AppUser/{userId} {
+      allow read, create, update: if signedIn();
+      allow delete: if signedIn() && !isProtectedOwner();
+    }
+    match /{document=**} {
+      allow read, write: if signedIn();
+    }
+  }
+}

@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Noto+Sans+Arabic:wght@300;400;500;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Noto Sans Arabic first ensures Kurdish Sorani glyphs always render correctly.
+       Tajawal is a beautiful Arabic font but lacks several Kurdish codepoints. */
+    --font-tajawal: 'Noto Sans Arabic', 'Tajawal', sans-serif;
+    --font-kurdish: 'Noto Sans Arabic', 'Tajawal', sans-serif;
+    --font-arabic: 'Noto Sans Arabic', 'Tajawal', sans-serif;
+    --background: 190 80% 95%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 222 47% 20%;
+    --primary-foreground: 45 80% 95%;
+    --secondary: 45 80% 55%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 220 14% 92%;
+    --muted-foreground: 220 8% 46%;
+    --accent: 45 80% 55%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
+    --ring: 222 47% 20%;
+    --chart-1: 222 47% 20%;
+    --chart-2: 45 80% 55%;
+    --chart-3: 160 60% 45%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --radius: 0.75rem;
+    --sidebar-background: 222 47% 14%;
+    --sidebar-foreground: 45 80% 95%;
+    --sidebar-primary: 45 80% 55%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 222 47% 20%;
+    --sidebar-accent-foreground: 45 80% 95%;
+    --sidebar-border: 222 30% 22%;
+    --sidebar-ring: 45 80% 55%;
+  }
+
+  .dark {
+    --background: 222 47% 8%;
+    --foreground: 45 80% 95%;
+    --card: 222 47% 12%;
+    --card-foreground: 45 80% 95%;
+    --popover: 222 47% 12%;
+    --popover-foreground: 45 80% 95%;
+    --primary: 45 80% 55%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 222 47% 20%;
+    --secondary-foreground: 45 80% 95%;
+    --muted: 222 30% 18%;
+    --muted-foreground: 220 8% 56%;
+    --accent: 45 80% 55%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 222 30% 22%;
+    --input: 222 30% 22%;
+    --ring: 45 80% 55%;
+    --chart-1: 45 80% 55%;
+    --chart-2: 222 47% 40%;
+    --chart-3: 160 60% 45%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --sidebar-background: 222 47% 10%;
+    --sidebar-foreground: 45 80% 95%;
+    --sidebar-primary: 45 80% 55%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 222 47% 16%;
+    --sidebar-accent-foreground: 45 80% 95%;
+    --sidebar-border: 222 30% 18%;
+    --sidebar-ring: 45 80% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-tajawal;
+    direction: rtl;
+    /* Noto Sans Arabic covers both Arabic and Kurdish Sorani perfectly */
+    font-family: 'Noto Sans Arabic', 'Tajawal', sans-serif;
+  }
+}
+
+/* Both Arabic and Kurdish use Noto Sans Arabic as primary —
+   it has full Sorani Kurdish glyph coverage while still looking great in Arabic */
+[lang="ku"], .ku-text {
+  font-family: 'Noto Sans Arabic', 'Tajawal', sans-serif;
+}
+[lang="ar"], .ar-text {
+  font-family: 'Noto Sans Arabic', 'Tajawal', sans-serif;
+}

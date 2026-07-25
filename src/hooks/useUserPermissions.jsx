@@ -45,5 +45,14 @@ export function useUserPermissions() {
     },
     perm: activePerm,
     allowedBranchIds,
+    customRoleName: activePerm?.custom_role_name || '',
+    employeesVisibilityMode: activePerm?.employees_visibility_mode || 'all',
+    visibleEmployeeIds: activePerm?.visible_employee_ids || [],
+    contractsVisibilityMode: activePerm?.contracts_visibility_mode || 'all',
+    visibleContractIds: activePerm?.visible_contract_ids || [],
+    crmVisibilityMode: activePerm?.crm_visibility_mode || 'all',
+    visibleCrmUserIds: activePerm?.visible_crm_user_ids || [],
+    crmContactVisibilityMode: activePerm?.crm_contact_visibility_mode || 'own',
+    visibleCrmContactUserIds: activePerm?.visible_crm_contact_user_ids || [],
   };
 }

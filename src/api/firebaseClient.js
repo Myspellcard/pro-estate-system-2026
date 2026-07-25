@@ -122,6 +122,28 @@ const createEntityApi = (entityName) => ({
     return { id: docRef.id, ...payload };
   },
 
+  async bulkCreate(records = []) {
+    const created = [];
+    for (const record of toArray(records)) {
+      const { id, ...data } = record || {};
+      const now = new Date().toISOString();
+      const payload = normalizeData({
+        ...data,
+        created_date: data?.created_date || now,
+        updated_date: data?.updated_date || now,
+      });
+
+      if (id) {
+        await setDoc(doc(db, entityName, id), payload);
+        created.push({ id, ...payload });
+      } else {
+        const docRef = await addDoc(getCollection(entityName), payload);
+        created.push({ id: docRef.id, ...payload });
+      }
+    }
+    return created;
+  },
+
   async update(id, data) {
     if (!id) throw new Error(`${entityName}.update requires an id`);
     const payload = normalizeData({ ...data, updated_date: new Date().toISOString() });

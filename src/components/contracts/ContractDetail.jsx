@@ -224,10 +224,17 @@ export default function ContractDetail({ contract, invoices, onBack }) {
           status_ku: 'کرێدراو'
         });
       }
+      // Restore invoices that were cancelled back to pending (unpaid)
+      const contractInvoices = invoices.filter(i => i.contract_id === contract.id);
+      const cancelledInvoices = contractInvoices.filter(inv => inv.status === 'ملغي' || inv.status_ku === 'هەڵوەشاندراوە');
+      for (const inv of cancelledInvoices) {
+        try { await firebaseApi.entities.Invoice.update(inv.id, { status: 'معلقة', status_ku: 'چاوەڕوان' }); } catch (_) {}
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
       queryClient.invalidateQueries({ queryKey: ['properties'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
       onBack();
     },
   });
@@ -245,10 +252,17 @@ export default function ContractDetail({ contract, invoices, onBack }) {
           status_ku: 'بەردەست'
         });
       }
+      // Cancel all unpaid (not paid) invoices for this contract
+      const contractInvoices = invoices.filter(i => i.contract_id === contract.id);
+      const unpaidInvoices = contractInvoices.filter(inv => inv.status !== 'مدفوعة' && inv.status_ku !== 'پارەدراو');
+      for (const inv of unpaidInvoices) {
+        try { await firebaseApi.entities.Invoice.update(inv.id, { status: 'ملغي', status_ku: 'هەڵوەشاندراوە' }); } catch (_) {}
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
       queryClient.invalidateQueries({ queryKey: ['properties'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
       onBack();
     },
   });
@@ -398,6 +412,8 @@ export default function ContractDetail({ contract, invoices, onBack }) {
     'چاوەڕوان': <Clock className="w-4 h-4 text-amber-600" />,
     'متأخرة': <AlertTriangle className="w-4 h-4 text-red-600" />,
     'نەدراوەکان': <AlertTriangle className="w-4 h-4 text-red-600" />,
+    'ملغي': <XCircle className="w-4 h-4 text-slate-500" />,
+    'هەڵوەشاندراوە': <XCircle className="w-4 h-4 text-slate-500" />,
   };
 
   // Filter invoices using bilingual fields (check both Arabic and Kurdish)
@@ -405,6 +421,8 @@ export default function ContractDetail({ contract, invoices, onBack }) {
   const insuranceInvoices = invoices.filter(i => i.type === 'تأمين' || i.type_ku === 'دڵنیایی');
   // Helper function to check if invoice is paid
   const isPaid = (inv) => inv.status === 'مدفوعة' || inv.status_ku === 'پارەدراو';
+  // Helper function to check if invoice is cancelled
+  const isCancelled = (inv) => inv.status === 'ملغي' || inv.status_ku === 'هەڵوەشاندراوە';
 
   // Owner invoices (payments to owner)
   const ownerPaymentInvoices = invoices.filter(i => i.type === 'دفع_للمالك' || i.type_ku === 'پارەدان بۆ خاوەن');
@@ -1281,10 +1299,11 @@ export default function ContractDetail({ contract, invoices, onBack }) {
               {/* Invoice List - Dark Table Style */}
               <div className="space-y-2">
                 {sortedRentInvoices.map((inv, idx) => {
-                  const isLate = !isPaid(inv) && inv.due_date && new Date(inv.due_date) < today;
+                  const cancelled = isCancelled(inv);
+                  const isLate = !isPaid(inv) && !cancelled && inv.due_date && new Date(inv.due_date) < today;
                   const paid = isPaid(inv);
-                  const borderColor = paid ? 'rgba(16, 185, 129, 0.3)' : isLate ? 'rgba(239, 68, 68, 0.3)' : 'rgba(100, 116, 139, 0.3)';
-                  const bgColor = paid ? 'rgba(16, 185, 129, 0.08)' : isLate ? 'rgba(239, 68, 68, 0.08)' : 'rgba(100, 116, 139, 0.05)';
+                  const borderColor = paid ? 'rgba(16, 185, 129, 0.3)' : cancelled ? 'rgba(100, 116, 139, 0.4)' : isLate ? 'rgba(239, 68, 68, 0.3)' : 'rgba(100, 116, 139, 0.3)';
+                  const bgColor = paid ? 'rgba(16, 185, 129, 0.08)' : cancelled ? 'rgba(100, 116, 139, 0.12)' : isLate ? 'rgba(239, 68, 68, 0.08)' : 'rgba(100, 116, 139, 0.05)';
                   
                   return (
                     <div key={inv.id} className="rounded-xl p-4 transition-all hover:shadow-lg" style={{background: bgColor, border: `1px solid ${borderColor}`}}>
@@ -1313,8 +1332,8 @@ export default function ContractDetail({ contract, invoices, onBack }) {
                           
                           {/* Status + Buttons inline on mobile */}
                           <div className="flex items-center gap-2 mr-auto md:mr-0">
-                            <span className={`text-xs md:text-sm font-bold px-2 py-1 md:px-3 md:py-1.5 rounded-lg whitespace-nowrap ${paid ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50' : isLate ? 'bg-red-500/30 text-red-300 border border-red-500/50' : 'bg-amber-500/30 text-amber-300 border border-amber-500/50'}`} style={{fontFamily: "'Noto Sans Arabic', 'Tajawal', sans-serif"}}>
-                              {inv.status === 'پارەدراو' ? 'پارەی دراو' : inv.status === 'دواکەوتوو' ? 'نەدراوەکان' : inv.status}
+                            <span className={`text-xs md:text-sm font-bold px-2 py-1 md:px-3 md:py-1.5 rounded-lg whitespace-nowrap ${paid ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50' : cancelled ? 'bg-slate-500/30 text-slate-300 border border-slate-500/50' : isLate ? 'bg-red-500/30 text-red-300 border border-red-500/50' : 'bg-amber-500/30 text-amber-300 border border-amber-500/50'}`} style={{fontFamily: "'Noto Sans Arabic', 'Tajawal', sans-serif"}}>
+                              {inv.status === 'پارەدراو' ? 'پارەی دراو' : inv.status === 'دواکەوتوو' ? 'نەدراوەکان' : inv.status === 'هەڵوەشاندراوە' ? L('ملغي', 'هەڵوەشاندراوە') : inv.status}
                             </span>
                             {/* Buttons shown inline on mobile, hidden on desktop */}
                             <div className="flex gap-1 md:hidden">
@@ -1323,7 +1342,7 @@ export default function ContractDetail({ contract, invoices, onBack }) {
                                   <Printer className="w-3 h-3" />
                                 </Button>
                               )}
-                              {!paid && (inv.type === 'إيجار' ? can('can_edit_rent_invoices') : can('can_edit_insurance_invoices')) && (
+                              {!paid && !cancelled && (inv.type === 'إيجار' ? can('can_edit_rent_invoices') : can('can_edit_insurance_invoices')) && (
                                 <Button size="sm" className="h-7 px-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setConfirmPayInvoice(inv)}>
                                   {L('دفع', 'پ')}
                                 </Button>
@@ -1339,7 +1358,7 @@ export default function ContractDetail({ contract, invoices, onBack }) {
                               <Printer className="w-3 h-3" />
                             </Button>
                           )}
-                          {!paid && (inv.type === 'إيجار' ? can('can_edit_rent_invoices') : can('can_edit_insurance_invoices')) && (
+                          {!paid && !cancelled && (inv.type === 'إيجار' ? can('can_edit_rent_invoices') : can('can_edit_insurance_invoices')) && (
                             <Button size="sm" className="h-8 px-3 text-xs bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setConfirmPayInvoice(inv)}>
                               {L('دفع', 'پ')}
                             </Button>

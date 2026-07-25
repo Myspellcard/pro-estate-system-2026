@@ -19,7 +19,7 @@ const STATUS_COLORS = {
   'خسارة': 'bg-slate-200 text-slate-700',
 };
 
-export default function LeadDetail({ lead, project, property, isAdmin, allUsers = [], onClose, onEdit, onAddFollowup, onConvert, onUpdateSharing, onUpdateLossNote }) {
+export default function LeadDetail({ lead, project, property, isAdmin, allUsers = [], onClose, onEdit, onAddFollowup, onConvert, onUpdateSharing, onUpdateLossNote, canSeePhone = true }) {
   const { lang } = useLanguage();
   const L = (ar, ku) => lang === 'ku' ? ku : ar;
   const [followupDate, setFollowupDate] = useState(new Date().toISOString().split('T')[0]);
@@ -59,12 +59,18 @@ export default function LeadDetail({ lead, project, property, isAdmin, allUsers 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
         <div className="flex items-center gap-2 text-sm">
           <Phone className="w-4 h-4 text-muted-foreground" />
-          <span dir="ltr">{lead.phone}</span>
-          <a href={waLink(lead.phone)} target="_blank" rel="noreferrer" className="w-6 h-6 rounded-lg bg-green-100 hover:bg-green-200 flex items-center justify-center transition-colors">
-            <MessageCircle className="w-3.5 h-3.5 text-green-600" />
-          </a>
+          {canSeePhone ? (
+            <>
+              <span dir="ltr">{lead.phone}</span>
+              <a href={waLink(lead.phone)} target="_blank" rel="noreferrer" className="w-6 h-6 rounded-lg bg-green-100 hover:bg-green-200 flex items-center justify-center transition-colors">
+                <MessageCircle className="w-3.5 h-3.5 text-green-600" />
+              </a>
+            </>
+          ) : (
+            <span className="text-muted-foreground">{L('مخفي 🔒', 'شاراوە 🔒')}</span>
+          )}
         </div>
-        {lead.phone2 && (
+        {lead.phone2 && canSeePhone && (
           <div className="flex items-center gap-2 text-sm">
             <Phone className="w-4 h-4 text-muted-foreground" />
             <span dir="ltr">{lead.phone2}</span>

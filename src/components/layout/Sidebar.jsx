@@ -281,7 +281,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
             <SectionCard open={rentOpen && !collapsed}>
               {!collapsed && (
                 <SectionHeader
-                  label={T('general.rent_section', 'IJAR', 'کرێ')}
+                  label={lang === 'ku' ? 'کرێ' : 'الإيجار'}
                   color="#3b82f6"
                   open={rentOpen}
                   onToggle={() => setRentOpen(o => !o)}
@@ -304,7 +304,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
             <SectionCard open={saleOpen && !collapsed}>
               {!collapsed && (
                 <SectionHeader
-                  label={T('general.sale_section', 'SALE', 'فرۆشتن')}
+                  label={lang === 'ku' ? 'فرۆشتن' : 'المبيعات'}
                   color="#f59e0b"
                   open={saleOpen}
                   onToggle={() => setSaleOpen(o => !o)}
@@ -429,7 +429,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
               <SectionCard open={adminOpen && !collapsed}>
                 {!collapsed && (
                   <SectionHeader
-                    label={T('admin.section_label', 'بەرێوەبردنی لقەکان', 'بەرێوەبردنی لقەکان')}
+                    label={T('admin.section_label', 'إدارة الفروع', 'بەرێوەبردنی لقەکان')}
                     color="#6d28d9"
                     open={adminOpen}
                     onToggle={() => setAdminOpen(o => !o)}
@@ -440,8 +440,8 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
                 {(adminOpen || collapsed) && (
                   <div className="px-2 pb-2 space-y-0.5">
                     {[
-                      (isAdmin || can('can_manage_branches')) && { path: '/admin/branches', icon: Settings, ar: 'بەرێوەبردنی لقەکان', ku: 'بەرێوەبردنی لقەکان', tKey: 'admin.branches' },
-                      (isAdmin || can('can_manage_users')) && { path: '/admin/users', icon: Shield, ar: 'بەکارهێنەر و ڕۆڵەکان', ku: 'بەکارهێنەر و ڕۆڵەکان', tKey: 'admin.users' },
+                      (isAdmin || can('can_manage_branches')) && { path: '/admin/branches', icon: Settings, ar: 'إدارة الفروع', ku: 'بەرێوەبردنی لقەکان', tKey: 'admin.branches' },
+                      (isAdmin || can('can_manage_users')) && { path: '/admin/users', icon: Shield, ar: 'المستخدمون والأدوار', ku: 'بەکارهێنەر و ڕۆڵەکان', tKey: 'admin.users' },
                     ].filter(Boolean).map(item => (
                       <CardNavLink key={item.path} item={{ ...item, label: item.ar, labelKu: item.ku }} collapsed={collapsed} isActive={location.pathname === item.path} onClick={closeAll} T={T} />
                     ))}
@@ -454,7 +454,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
                 <SectionCard open={settingsOpen && !collapsed}>
                   {!collapsed && (
                     <SectionHeader
-                      label={T('admin.settings_section', 'ڕێکخستنەکانی داشبۆرد', 'ڕێکخستنەکانی داشبۆرد')}
+                      label={T('admin.settings_section', 'إعدادات لوحة التحكم', 'ڕێکخستنەکانی داشبۆرد')}
                       color="#065f46"
                       open={settingsOpen}
                       onToggle={() => setSettingsOpen(o => !o)}
@@ -465,16 +465,16 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
                   {(settingsOpen || collapsed) && (
                     <div className="px-2 pb-2 space-y-0.5">
                       {[
-                        { path: '/admin/dashboard-settings', icon: Settings, ar: 'ڕێکخستنەکانی داشبۆرد', ku: 'ڕێکخستنەکانی داشبۆرد', tKey: 'admin.dashboard_settings' },
-                        { path: '/admin/print-settings', icon: Printer, ar: 'ڕێکخستنەکانی پرینت', ku: 'ڕێکخستنەکانی پرینت', tKey: 'admin.print_settings' },
+                        { path: '/admin/dashboard-settings', icon: Settings, ar: 'إعدادات لوحة التحكم', ku: 'ڕێکخستنەکانی داشبۆرد', tKey: 'admin.dashboard_settings' },
+                        { path: '/admin/print-settings', icon: Printer, ar: 'إعدادات الطباعة', ku: 'ڕێکخستنەکانی پرینت', tKey: 'admin.print_settings' },
                         { path: '/admin/barcode-settings', icon: QrCode, ar: 'إعدادات الباركود', ku: 'ڕێکخستنەکانی بارکۆد', tKey: 'admin.barcode_settings' },
-                        { path: '/admin/whatsapp-templates', icon: MessageSquare, ar: 'داڕشتنەکانی واتسەپ', ku: 'داڕشتنەکانی واتسەپ', tKey: 'admin.whatsapp_templates' },
-                        { path: '/admin/property-status-colors', icon: Palette, ar: 'رەنگەکانی دۆخ', ku: 'رەنگەکانی دۆخ', tKey: 'admin.property_status_colors' },
-                        { path: '/admin/property-purposes', icon: Target, ar: 'مەبەستەکان', ku: 'مەبەستەکان', tKey: 'admin.property_purposes' },
-                        { path: '/admin/translations', icon: Languages, ar: 'وەرگێڕانەکان', ku: 'وەرگێڕانەکان', tKey: 'admin.translations' },
-                        { path: '/admin/advertisements', icon: Megaphone, ar: 'ڕیکلامەکان', ku: 'ڕیکلامەکان', tKey: 'admin.advertisements' },
-                        { path: '/admin/currencies', icon: DollarSign, ar: 'دراوەکان', ku: 'دراوەکان', tKey: 'admin.currencies' },
-                        { path: '/admin/numbering-settings', icon: Hash, ar: 'ژمارەدانی بەڵگەنامەکان', ku: 'ژمارەدانی بەڵگەنامەکان', tKey: 'admin.numbering_settings' },
+                        { path: '/admin/whatsapp-templates', icon: MessageSquare, ar: 'قوالب واتساب', ku: 'داڕشتنەکانی واتسەپ', tKey: 'admin.whatsapp_templates' },
+                        { path: '/admin/property-status-colors', icon: Palette, ar: 'ألوان الحالة', ku: 'رەنگەکانی دۆخ', tKey: 'admin.property_status_colors' },
+                        { path: '/admin/property-purposes', icon: Target, ar: 'الأغراض', ku: 'مەبەستەکان', tKey: 'admin.property_purposes' },
+                        { path: '/admin/translations', icon: Languages, ar: 'الترجمات', ku: 'وەرگێڕانەکان', tKey: 'admin.translations' },
+                        { path: '/admin/advertisements', icon: Megaphone, ar: 'الإعلانات', ku: 'ڕیکلامەکان', tKey: 'admin.advertisements' },
+                        { path: '/admin/currencies', icon: DollarSign, ar: 'العملات', ku: 'دراوەکان', tKey: 'admin.currencies' },
+                        { path: '/admin/numbering-settings', icon: Hash, ar: 'ترقيم المستندات', ku: 'ژمارەدانی بەڵگەنامەکان', tKey: 'admin.numbering_settings' },
                       ].map(item => (
                         <CardNavLink key={item.path} item={{ ...item, label: item.ar, labelKu: item.ku }} collapsed={collapsed} isActive={location.pathname === item.path} onClick={closeAll} T={T} />
                       ))}
@@ -488,7 +488,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
                 <SectionCard open={hrOpen && !collapsed}>
                   {!collapsed && (
                     <SectionHeader
-                      label={T('admin.hr_section', 'ڕاپۆرتی HR', 'ڕاپۆرتی HR')}
+                      label={T('admin.hr_section', 'تقارير الموارد البشرية', 'ڕاپۆرتی HR')}
                       color="#be185d"
                       open={hrOpen}
                       onToggle={() => setHrOpen(o => !o)}
@@ -499,8 +499,8 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
                   {(hrOpen || collapsed) && (
                     <div className="px-2 pb-2 space-y-0.5">
                       {[
-                        { path: '/hr-reports', icon: Shield, ar: 'ڕاپۆرتی HR', ku: 'ڕاپۆرتی HR', tKey: 'admin.hr_reports' },
-                        { path: '/employee-goals', icon: Target, ar: 'ئامانجەکان', ku: 'ئامانجەکان', tKey: 'nav.employee_goals' },
+                        { path: '/hr-reports', icon: Shield, ar: 'تقارير الموارد البشرية', ku: 'ڕاپۆرتی HR', tKey: 'admin.hr_reports' },
+                        { path: '/employee-goals', icon: Target, ar: 'الأهداف', ku: 'ئامانجەکان', tKey: 'nav.employee_goals' },
                         { path: '/organization-structure', icon: Users, ar: 'الهيكل التنظيمي', ku: 'هەیکەلی کۆمپانیا', tKey: 'nav.org_structure' },
                       ].map(item => (
                         <CardNavLink key={item.path} item={{ ...item, label: item.ar, labelKu: item.ku }} collapsed={collapsed} isActive={location.pathname === item.path} onClick={closeAll} T={T} />
@@ -534,7 +534,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
                 <SectionCard open={projectsCatOpen && !collapsed}>
                   {!collapsed && (
                     <SectionHeader
-                      label={T('admin.projects_and_categories', 'پڕۆژەکان و پۆڵبەندییەکان', 'پڕۆژەکان و پۆڵبەندییەکان')}
+                      label={T('admin.projects_and_categories', 'المشاريع والتصنيفات', 'پڕۆژەکان و پۆڵبەندییەکان')}
                       color="#0e7490"
                       open={projectsCatOpen}
                       onToggle={() => setProjectsCatOpen(o => !o)}
@@ -545,11 +545,11 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
                   {(projectsCatOpen || collapsed) && (
                     <div className="px-2 pb-2 space-y-0.5">
                       {[
-                        { path: '/admin/projects', icon: FolderOpen, ar: 'پڕۆژەکان', ku: 'پڕۆژەکان', tKey: 'admin.projects' },
-                        (activeBranch?.business_mode === 'rent' || activeBranch?.business_mode === 'both') && { path: '/admin/project-categories', icon: Layers, ar: 'پۆلەکانی کرێ', ku: 'پۆلەکانی کرێ', tKey: 'admin.rent_categories' },
-                        (activeBranch?.business_mode === 'sale' || activeBranch?.business_mode === 'both') && { path: '/admin/sale-categories', icon: Layers, ar: 'پۆلەکانی فرۆشتن', ku: 'پۆلەکانی فرۆشتن', tKey: 'admin.sale_categories' },
-                        { path: '/admin/clauses', icon: FileText, ar: 'بەندەکانی گرێبەستی کرێ', ku: 'بەندەکانی گرێبەستی کرێ', tKey: 'admin.rent_clauses' },
-                        { path: '/admin/sale-contract-clauses', icon: FileText, ar: 'بەندەکانی گرێبەستی فرۆشتن', ku: 'بەندەکانی گرێبەستی فرۆشتن', tKey: 'admin.sale_clauses' },
+                        { path: '/admin/projects', icon: FolderOpen, ar: 'المشاريع', ku: 'پڕۆژەکان', tKey: 'admin.projects' },
+                        (activeBranch?.business_mode === 'rent' || activeBranch?.business_mode === 'both') && { path: '/admin/project-categories', icon: Layers, ar: 'تصنيفات الإيجار', ku: 'پۆلەکانی کرێ', tKey: 'admin.rent_categories' },
+                        (activeBranch?.business_mode === 'sale' || activeBranch?.business_mode === 'both') && { path: '/admin/sale-categories', icon: Layers, ar: 'تصنيفات البيع', ku: 'پۆلەکانی فرۆشتن', tKey: 'admin.sale_categories' },
+                        { path: '/admin/clauses', icon: FileText, ar: 'بنود عقد الإيجار', ku: 'بەندەکانی گرێبەستی کرێ', tKey: 'admin.rent_clauses' },
+                        { path: '/admin/sale-contract-clauses', icon: FileText, ar: 'بنود عقد البيع', ku: 'بەندەکانی گرێبەستی فرۆشتن', tKey: 'admin.sale_clauses' },
                       ].filter(Boolean).map(item => (
                         <CardNavLink key={item.path} item={{ ...item, label: item.ar, labelKu: item.ku }} collapsed={collapsed} isActive={location.pathname === item.path} onClick={closeAll} T={T} />
                       ))}
@@ -563,7 +563,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
                 <SectionCard open={approvalSettingsOpen && !collapsed}>
                   {!collapsed && (
                     <SectionHeader
-                      label={T('admin.approval_settings', 'ڕێکخستنەکانی پەسەندکردن', 'ڕێکخستنەکانی پەسەندکردن')}
+                      label={T('admin.approval_settings', 'إعدادات الموافقات', 'ڕێکخستنەکانی پەسەندکردن')}
                       color="#b45309"
                       open={approvalSettingsOpen}
                       onToggle={() => setApprovalSettingsOpen(o => !o)}
@@ -574,9 +574,9 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
                   {(approvalSettingsOpen || collapsed) && (
                     <div className="px-2 pb-2 space-y-0.5">
                       {[
-                        { path: '/admin/permission-approvers', icon: HandCoins, ar: 'ڕێکخستنەکانی قەرز', ku: 'ڕێکخستنەکانی قەرز', tKey: 'admin.loan_approvers' },
-                        { path: '/admin/permission-approvers?tab=permissions', icon: FileCheck, ar: 'ڕێکخستنەکانی مۆڵەت', ku: 'ڕێکخستنەکانی مۆڵەت', tKey: 'admin.permission_approvers_link' },
-                        { path: '/admin/permission-approvers?tab=products', icon: Package, ar: 'ڕێکخستنەکانی بەرهەم', ku: 'ڕێکخستنەکانی بەرهەم', tKey: 'admin.products_approvers' },
+                        { path: '/admin/permission-approvers', icon: HandCoins, ar: 'إعدادات القروض', ku: 'ڕێکخستنەکانی قەرز', tKey: 'admin.loan_approvers' },
+                        { path: '/admin/permission-approvers?tab=permissions', icon: FileCheck, ar: 'إعدادات الإذن', ku: 'ڕێکخستنەکانی مۆڵەت', tKey: 'admin.permission_approvers_link' },
+                        { path: '/admin/permission-approvers?tab=products', icon: Package, ar: 'إعدادات المنتجات', ku: 'ڕێکخستنەکانی بەرهەم', tKey: 'admin.products_approvers' },
                       ].map(item => {
                         const fullPath = item.path.split('?')[0];
                         const search = item.path.includes('?') ? '?' + item.path.split('?')[1] : '';
@@ -604,7 +604,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
                     className={cn("text-[10px] px-1.5 py-0.5 rounded-md font-bold transition-colors",
                       lang === l ? "bg-[#35e5d3] text-[#0f1620]" : "text-white/35 hover:text-white/60 bg-white/05"
                     )}>
-                    {l === 'ar' ? 'العربية' : 'کوردی'}
+                    {l === 'ar' ? 'العربية' : (lang === 'ar' ? 'الكردية' : 'کوردی')}
                   </button>
                 ))}
               </div>

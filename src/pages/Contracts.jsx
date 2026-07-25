@@ -4,6 +4,7 @@ import { firebaseApi } from '@/api/firebaseClient';
 import { useBranch } from '@/context/BranchContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { useAuth } from '@/lib/AuthContext';
 import { FileText, Building2, Layers, Eye, Pencil, Trash2, Download, Phone, MessageCircle, Send, Search, FileSpreadsheet } from 'lucide-react';
 import { generateContractsPDF, generateSingleContractPDF } from '@/utils/pdfExport';
 import { format, parseISO, addMonths, addDays } from 'date-fns';
@@ -55,7 +56,8 @@ export default function Contracts() {
     const ar = statusCanonical(status);
     return L(ar, statusKuMap[ar] || ar);
   };
-  const { can } = useUserPermissions();
+  const { can, isAdmin, contractsVisibilityMode, visibleContractIds } = useUserPermissions();
+  const { user } = useAuth();
 
   const { data: settingsList = [] } = useQuery({
     queryKey: ['app_settings'],
@@ -218,17 +220,26 @@ export default function Contracts() {
 
   const NO_PROJECT_ID = '__no_project__';
 
+  // Apply contract visibility filtering for non-admin users
+  const visibleContracts = isAdmin
+    ? allContracts
+    : contractsVisibilityMode === 'own'
+      ? allContracts.filter(c => c.created_by_id === user?.id)
+      : contractsVisibilityMode === 'specific'
+        ? allContracts.filter(c => (visibleContractIds || []).includes(c.id))
+        : allContracts;
+
   const projectContractsAll = selectedProject
     ? selectedProject.id === NO_PROJECT_ID
-      ? allContracts.filter(c => {
+      ? visibleContracts.filter(c => {
           const property = properties.find(p => p.id === c.property_id);
           return !property?.project_id;
         })
-      : allContracts.filter(c => {
+      : visibleContracts.filter(c => {
           const property = properties.find(p => p.id === c.property_id);
           return property?.project_id === selectedProject.id;
         })
-    : allContracts;
+    : visibleContracts;
 
   const projectCurrencies = [...new Set(projectContractsAll.map(c => c.currency_symbol || 'د.ع'))];
 

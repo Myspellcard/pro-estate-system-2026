@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import DataVisibilityControls from './DataVisibilityControls';
 
 // ─── HELPERS ───────────────────────────────────────────────────────────────────
 // Items with standard read/write/delete columns
@@ -237,6 +238,202 @@ const SECTIONS = [
         widgetItems: [
           { key: 'can_manage_branches', labelAr: 'إدارة الفروع والشركات',        labelKu: 'بەڕێوەبردنی لق و کۆمپانیاکان', icon: '🏢' },
           { key: 'can_manage_users',    labelAr: 'إدارة المستخدمين والصلاحيات', labelKu: 'بەڕێوەبردنی بەکارهێنەران',      icon: '👥' },
+          { key: 'can_backup',           labelAr: 'النسخ الاحتياطي',               labelKu: 'بەکاپی داتا',                     icon: '💾' },
+        ],
+      },
+    ],
+  },
+  {
+    key: 'crm',
+    icon: '🎯',
+    labelAr: 'العملاء المحتملون (CRM)',
+    labelKu: 'کڕیارانی ئەگەری (CRM)',
+    headerColor: 'bg-cyan-700',
+    borderColor: 'border-cyan-200',
+    subSections: [
+      {
+        labelAr: 'إدارة العملاء المحتملين',
+        labelKu: 'بەڕێوەبردنی کڕیارانی ئەگەری',
+        icon: '🎯',
+        items: [
+          { key: 'crm', labelAr: 'العملاء المحتملون (إضافة / تعديل / حذف)', labelKu: 'کڕیارانی ئەگەری (زیادکردن / دەستکاری / سڕینەوە)', icon: '🎯' },
+        ],
+        toggleItems: [
+          { key: 'can_manage_crm_settings', labelAr: 'إدارة إعدادات CRM', labelKu: 'بەڕێوەبردنی ڕێکخستنەکانی CRM', icon: '⚙️' },
+        ],
+      },
+    ],
+  },
+  {
+    key: 'finance',
+    icon: '💹',
+    labelAr: 'القسم المالي',
+    labelKu: 'بەشی دارایی',
+    headerColor: 'bg-green-700',
+    borderColor: 'border-green-200',
+    subSections: [
+      {
+        labelAr: 'القسم المالي',
+        labelKu: 'بەشی دارایی',
+        icon: '💹',
+        items: [
+          { key: 'finance', labelAr: 'القسم المالي (إدارة)', labelKu: 'بەشی دارایی (بەڕێوەبردن)', icon: '💹' },
+        ],
+      },
+    ],
+  },
+  {
+    key: 'approvals',
+    icon: '✍️',
+    labelAr: 'الموافقات والقروض',
+    labelKu: 'پەسەندکردن و قەرزەکان',
+    headerColor: 'bg-amber-700',
+    borderColor: 'border-amber-200',
+    subSections: [
+      {
+        labelAr: 'طلبات الموافقة',
+        labelKu: 'داواکاریەکانی پەسەندکردن',
+        icon: '✍️',
+        viewOnlyItems: [
+          { key: 'permissions_required', labelAr: 'طلبات الإذن والمهل', labelKu: 'داواکاری مۆڵەت و مەهلت', icon: '📋' },
+          { key: 'products_required',    labelAr: 'طلبات المشتريات',    labelKu: 'داواکاری کڕینەکان',       icon: '📦' },
+          { key: 'loans_required',        labelAr: 'طلبات القروض',        labelKu: 'داواکاری قەرز',           icon: '💰' },
+        ],
+      },
+    ],
+  },
+  {
+    key: 'hr',
+    icon: '👔',
+    labelAr: 'الموارد البشرية',
+    labelKu: 'سەرچاوەی مرۆیی',
+    headerColor: 'bg-pink-700',
+    borderColor: 'border-pink-200',
+    subSections: [
+      {
+        labelAr: 'الموظفون والأقسام',
+        labelKu: 'کارمەندان و بەشەکان',
+        icon: '👔',
+        items: [
+          { key: 'employees',   labelAr: 'الموظفون (إضافة / تعديل / حذف)', labelKu: 'کارمەندان (زیادکردن / دەستکاری / سڕینەوە)', icon: '👤' },
+          { key: 'departments', labelAr: 'الأقسام (إضافة / تعديل / حذف)',  labelKu: 'بەشەکان (زیادکردن / دەستکاری / سڕینەوە)',   icon: '🏢' },
+        ],
+      },
+      {
+        labelAr: 'التقارير والأهداف',
+        labelKu: 'ڕاپۆرت و ئامانجەکان',
+        icon: '📊',
+        viewOnlyItems: [
+          { key: 'hr_reports',     labelAr: 'تقارير الموارد البشرية', labelKu: 'ڕاپۆرتی سەرچاوەی مرۆیی', icon: '📊' },
+          { key: 'employee_goals', labelAr: 'أهداف الموظفين',          labelKu: 'ئامانجەکانی کارمەندان', icon: '🎯' },
+          { key: 'org_structure',  labelAr: 'الهيكل التنظيمي',          labelKu: 'هەیکەلی ڕێکخستن',       icon: '🏗️' },
+        ],
+      },
+    ],
+  },
+  {
+    key: 'projects_cat',
+    icon: '📁',
+    labelAr: 'المشاريع والتصنيفات',
+    labelKu: 'پڕۆژە و پۆلێنکردن',
+    headerColor: 'bg-teal-700',
+    borderColor: 'border-teal-200',
+    subSections: [
+      {
+        labelAr: 'المشاريع',
+        labelKu: 'پڕۆژەکان',
+        icon: '📁',
+        items: [
+          { key: 'projects', labelAr: 'المشاريع (إضافة / تعديل / حذف)', labelKu: 'پڕۆژەکان (زیادکردن / دەستکاری / سڕینەوە)', icon: '📁' },
+        ],
+      },
+      {
+        labelAr: 'التصنيفات',
+        labelKu: 'پۆلێنکردن',
+        icon: '🗂️',
+        items: [
+          { key: 'rent_categories', labelAr: 'تصنيفات الإيجار (إضافة / تعديل / حذف)', labelKu: 'پۆلی کرێ (زیادکردن / دەستکاری / سڕینەوە)', icon: '🗂️' },
+          { key: 'sale_categories', labelAr: 'تصنيفات البيع (إضافة / تعديل / حذف)',  labelKu: 'پۆلی فرۆشتن (زیادکردن / دەستکاری / سڕینەوە)', icon: '🗂️' },
+        ],
+      },
+      {
+        labelAr: 'بنود العقود',
+        labelKu: 'بەندەکانی گرێبەست',
+        icon: '📝',
+        items: [
+          { key: 'rent_clauses', labelAr: 'بنود عقد الإيجار (إضافة / تعديل / حذف)', labelKu: 'بەندەکانی گرێبەستی کرێ (زیادکردن / دەستکاری / سڕینەوە)', icon: '📝' },
+          { key: 'sale_clauses', labelAr: 'بنود عقد البيع (إضافة / تعديل / حذف)',  labelKu: 'بەندەکانی گرێبەستی فرۆشتن (زیادکردن / دەستکاری / سڕینەوە)', icon: '📝' },
+        ],
+      },
+    ],
+  },
+  {
+    key: 'admin_settings',
+    icon: '⚙️',
+    labelAr: 'إعدادات النظام',
+    labelKu: 'ڕێکخستنەکانی سیستەم',
+    headerColor: 'bg-slate-700',
+    borderColor: 'border-slate-200',
+    subSections: [
+      {
+        labelAr: 'إعدادات لوحة التحكم والطباعة',
+        labelKu: 'ڕێکخستنی داشبۆرد و چاپ',
+        icon: '⚙️',
+        widgetItems: [
+          { key: 'can_manage_dashboard_settings', labelAr: 'إعدادات لوحة التحكم', labelKu: 'ڕێکخستنی داشبۆرد',     icon: '🖥️' },
+          { key: 'can_manage_print_settings',      labelAr: 'إعدادات الطباعة',       labelKu: 'ڕێکخستنی چاپ',        icon: '🖨️' },
+          { key: 'can_manage_numbering_settings',   labelAr: 'ترقيم المستندات',       labelKu: 'ژمارەدانی بەڵگەنامە', icon: '🔢' },
+        ],
+      },
+      {
+        labelAr: 'إعدادات العقارات',
+        labelKu: 'ڕێکخستنی خانووبەرە',
+        icon: '🏢',
+        widgetItems: [
+          { key: 'can_manage_property_status_colors', labelAr: 'ألوان حالات العقار', labelKu: 'ڕەنگەکانی دۆخی خانوو', icon: '🎨' },
+          { key: 'can_manage_property_purposes',        labelAr: 'أغراض العقار',         labelKu: 'مەبەستەکانی خانوو',    icon: '🎯' },
+          { key: 'can_manage_property_labels',           labelAr: 'تسميات العقار',        labelKu: 'تاگەکانی خانوو',       icon: '🏷️' },
+        ],
+      },
+      {
+        labelAr: 'إعدادات الرسائل والترجمات',
+        labelKu: 'ڕێکخستنی نامە و وەرگێڕان',
+        icon: '💬',
+        widgetItems: [
+          { key: 'can_manage_whatsapp_templates', labelAr: 'قوالب واتساب',  labelKu: 'داڕشتنەکانی واتساپ', icon: '💬' },
+          { key: 'can_manage_translations',        labelAr: 'الترجمات',      labelKu: 'وەرگێڕانەکان',       icon: '🌐' },
+        ],
+      },
+      {
+        labelAr: 'إعدادات أخرى',
+        labelKu: 'ڕێکخستنی تر',
+        icon: '🔧',
+        widgetItems: [
+          { key: 'can_manage_barcode_settings',  labelAr: 'إعدادات الباركود',  labelKu: 'ڕێکخستنی بارکۆد',  icon: '📱' },
+          { key: 'can_manage_barcode_statuses',  labelAr: 'حالات الباركود',     labelKu: 'دۆخەکانی بارکۆد',  icon: '📋' },
+          { key: 'can_manage_advertisements',    labelAr: 'الإعلانات',          labelKu: 'ڕیکلامەکان',       icon: '📢' },
+          { key: 'can_manage_currencies',         labelAr: 'العملات',            labelKu: 'دراوەکان',        icon: '💵' },
+          { key: 'can_manage_task_colors',        labelAr: 'ألوان المهام',       labelKu: 'ڕەنگەکانی ئەرک',  icon: '🎨' },
+        ],
+      },
+    ],
+  },
+  {
+    key: 'approval_settings',
+    icon: '🔑',
+    labelAr: 'إعدادات الموافقات',
+    labelKu: 'ڕێکخستنی پەسەندکردن',
+    headerColor: 'bg-orange-700',
+    borderColor: 'border-orange-200',
+    subSections: [
+      {
+        labelAr: 'الموافقون',
+        labelKu: 'پەسەندکەران',
+        icon: '🔑',
+        widgetItems: [
+          { key: 'can_manage_loan_approvers',       labelAr: 'إعدادات القروض',   labelKu: 'ڕێکخستنی قەرز',   icon: '💰' },
+          { key: 'can_manage_permission_approvers',  labelAr: 'إعدادات الإذن',     labelKu: 'ڕێکخستنی مۆڵەت', icon: '📋' },
+          { key: 'can_manage_products_approvers',     labelAr: 'إعدادات المنتجات',  labelKu: 'ڕێکخستنی بەرهەم', icon: '📦' },
         ],
       },
     ],
@@ -562,6 +759,9 @@ export default function UserPermissionsEditor({ form, setForm, lang }) {
           <SectionBlock key={section.key} section={section} form={form} toggle={toggle} setForm={setForm} L={L} defaultOpen={idx === 0} />
         ))}
       </div>
+
+      {/* Data Visibility & Access Control */}
+      <DataVisibilityControls form={form} setForm={setForm} lang={lang} />
     </div>
   );
 }

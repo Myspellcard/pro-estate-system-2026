@@ -20,7 +20,7 @@ const STATUS_HEADER_COLORS = {
   'خسارة': 'bg-red-600',
 };
 
-export default function LeadCard({ lead, L, STATUSES, STATUS_COLORS, onView, onStatusChange, onEdit, onDelete, lossReasons = [], onAddLossReason, canSeePhone = true }) {
+export default function LeadCard({ lead, L, STATUSES, STATUS_COLORS, onView, onStatusChange, onEdit, onDelete, lossReasons = [], onAddLossReason }) {
   const waLink = (phone) => `https://wa.me/${(phone || '').replace(/\D/g, '')}`;
   const [showLossDialog, setShowLossDialog] = useState(false);
 
@@ -44,11 +44,7 @@ export default function LeadCard({ lead, L, STATUSES, STATUS_COLORS, onView, onS
         <div className="p-5">
           <div className="flex items-start justify-between mb-3">
             <div>
-              {canSeePhone ? (
-                <p className="text-xs text-muted-foreground" dir="ltr">{lead.phone}</p>
-              ) : (
-                <p className="text-xs text-muted-foreground">{L('مخفي 🔒', 'شاراوە 🔒')}</p>
-              )}
+              <p className="text-xs text-muted-foreground" dir="ltr">{lead.phone}</p>
             </div>
           </div>
           <div className="mb-3" onClick={e => e.stopPropagation()}>
@@ -74,7 +70,7 @@ export default function LeadCard({ lead, L, STATUSES, STATUS_COLORS, onView, onS
             </div>
           )}
           <div className="flex gap-2" onClick={e => e.stopPropagation()}>
-            {lead.phone && canSeePhone && (
+            {lead.phone && (
               <a href={waLink(lead.phone)} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-lg bg-green-100 hover:bg-green-200 flex items-center justify-center transition-colors">
                 <MessageCircle className="w-4 h-4 text-green-600" />
               </a>

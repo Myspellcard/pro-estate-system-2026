@@ -13,11 +13,6 @@ export function useUserPermissions() {
     enabled: !!user,
   });
 
-  // Platform admins and owners always have full access
-  if (user?.role === 'admin' || user?.role === 'owner' || user?.is_admin || user?.is_owner) {
-    return { isAdmin: true, can: () => true, perm: null, allowedBranchIds: null };
-  }
-
   const userEmail = String(user?.email || '').trim().toLowerCase();
   const userPerms = permissions.filter((p) => {
     const permEmail = String(p.user_email || p.email || '').trim().toLowerCase();
@@ -36,13 +31,44 @@ export function useUserPermissions() {
     ? userPerms.filter(p => p.branch_id).map(p => p.branch_id)
     : null;
 
+  const allProjectPerms = userPerms.flatMap(p => p.project_permissions || []);
+  const crossBranchProjectIds = [...new Set(
+    allProjectPerms.filter(p => p.can_read).map(p => p.project_id)
+  )];
+  const crossBranchWriteProjectIds = [...new Set(
+    allProjectPerms.filter(p => p.can_write).map(p => p.project_id)
+  )];
+  const crossBranchDeleteProjectIds = [...new Set(
+    allProjectPerms.filter(p => p.can_delete).map(p => p.project_id)
+  )];
+
+  const isPermissionAdmin = userPerms.some(p => p.role === 'admin');
+  const isPlatformAdmin = user?.role === 'admin' || user?.role === 'owner' || user?.is_admin || user?.is_owner;
+  const isAdmin = isPlatformAdmin || isPermissionAdmin;
+
+  const permissionAliases = {
+    can_view_invoices: ['can_view_rent_invoices'],
+    can_edit_invoices: ['can_edit_rent_invoices'],
+    can_delete_invoices: ['can_delete_rent_invoices'],
+    can_view_properties: ['can_view_sales'],
+    can_edit_properties: ['can_edit_sales'],
+    can_delete_properties: ['can_delete_sales'],
+    can_view_contracts: ['can_view_sale_contracts'],
+    can_edit_contracts: ['can_edit_sale_contracts'],
+    can_delete_contracts: ['can_delete_sale_contracts'],
+  };
+
+  const can = (key) => {
+    if (isAdmin) return true;
+    if (!activePerm) return key.startsWith('can_view_') || key.startsWith('dash_');
+    if (key.startsWith('dash_')) return activePerm[key] !== false;
+    if (activePerm[key]) return true;
+    return (permissionAliases[key] || []).some(alias => !!activePerm[alias]);
+  };
+
   return {
-    isAdmin: false,
-    can: (key) => {
-      if (!activePerm) return key.startsWith('can_view_') || key.startsWith('dash_');
-      if (key.startsWith('dash_')) return activePerm[key] !== false;
-      return !!activePerm[key];
-    },
+    isAdmin,
+    can,
     perm: activePerm,
     allowedBranchIds,
     customRoleName: activePerm?.custom_role_name || '',
@@ -54,5 +80,10 @@ export function useUserPermissions() {
     visibleCrmUserIds: activePerm?.visible_crm_user_ids || [],
     crmContactVisibilityMode: activePerm?.crm_contact_visibility_mode || 'own',
     visibleCrmContactUserIds: activePerm?.visible_crm_contact_user_ids || [],
+    projectPermissions: activePerm?.project_permissions || [],
+    contractPropertiesScope: activePerm?.contract_properties_scope || 'branch',
+    crossBranchProjectIds,
+    crossBranchWriteProjectIds,
+    crossBranchDeleteProjectIds,
   };
 }

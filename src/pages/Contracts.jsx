@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { firebaseApi } from '@/api/firebaseClient';
 import { useBranch } from '@/context/BranchContext';
@@ -56,7 +56,7 @@ export default function Contracts() {
     const ar = statusCanonical(status);
     return L(ar, statusKuMap[ar] || ar);
   };
-  const { can, isAdmin, contractsVisibilityMode, visibleContractIds } = useUserPermissions();
+  const { can, isAdmin, contractsVisibilityMode, visibleContractIds, contractPropertiesScope } = useUserPermissions();
   const { user } = useAuth();
 
   const { data: settingsList = [] } = useQuery({
@@ -78,7 +78,12 @@ export default function Contracts() {
       : firebaseApi.entities.Contract.list('-created_date'),
   });
 
-  const { data: properties = [] } = useQuery({ queryKey: ['properties', activeBranch?.id], queryFn: () => activeBranch?.id ? firebaseApi.entities.Property.filter({ branch_id: activeBranch.id }) : firebaseApi.entities.Property.list() });
+  const { data: allProperties = [] } = useQuery({ queryKey: ['properties-all-contracts'], queryFn: () => firebaseApi.entities.Property.list() });
+  const properties = useMemo(() => {
+    if (isAdmin || contractPropertiesScope === 'all') return allProperties;
+    if (contractPropertiesScope === 'own') return allProperties.filter(p => p.created_by_id === user?.id);
+    return allProperties.filter(p => !activeBranch?.id || p.branch_id === activeBranch.id);
+  }, [allProperties, isAdmin, contractPropertiesScope, user?.id, activeBranch?.id]);
   const { data: tenants = [] } = useQuery({ queryKey: ['tenants'], queryFn: () => firebaseApi.entities.Tenant.list() });
   const { data: invoices = [] } = useQuery({ queryKey: ['invoices'], queryFn: () => firebaseApi.entities.Invoice.list() });
   const { data: contractTenantTemplates = [] } = useQuery({ queryKey: ['msg-tpl-ct'], queryFn: () => firebaseApi.entities.MessageTemplate.filter({ event_type: 'contract_to_tenant', is_active: true }) });

@@ -38,7 +38,7 @@ import {
 // You may also use .env values. See .env.example.
 const firebaseConfig = {
   apiKey: 'AIzaSyC4lqn04LroR1WpDLWK7KH5CSeUnZ74w0U',
-  authDomain: 'pro-estate-system-2026.firebaseapp.com',
+  authDomain: 'rz.myspellcard.org',
   projectId: 'pro-estate-system-2026',
   storageBucket: 'pro-estate-system-2026.firebasestorage.app',
   messagingSenderId: '780888974873',
@@ -90,8 +90,38 @@ const matchesFilter = (item, filterObject = {}) => {
 
 const getCollection = (entityName) => collection(db, entityName);
 
+const isLocalPreviewEntityMode = () => {
+  if (typeof window === 'undefined') return false;
+  return ['127.0.0.1', 'localhost'].includes(window.location.hostname)
+    && window.localStorage?.getItem('darRentNestLocalPreview') === 'true';
+};
+
+const getLocalEntityKey = (entityName) => `darRentNestLocalEntity:${entityName}`;
+
+const getLocalEntityItems = (entityName) => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(getLocalEntityKey(entityName));
+    return Array.isArray(JSON.parse(raw || '[]')) ? JSON.parse(raw || '[]') : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveLocalEntityItems = (entityName, items) => {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(getLocalEntityKey(entityName), JSON.stringify(toArray(items)));
+};
+
+const makeLocalEntityId = (entityName) => `${entityName.toLowerCase()}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
 const createEntityApi = (entityName) => ({
   async list(orderBy = '-created_date', limitCount) {
+    if (isLocalPreviewEntityMode()) {
+      const items = sortItems(getLocalEntityItems(entityName), orderBy);
+      return typeof limitCount === 'number' ? items.slice(0, limitCount) : items;
+    }
+
     const constraints = [];
     if (typeof limitCount === 'number') constraints.push(limitFn(limitCount));
     const snap = await getDocs(query(getCollection(entityName), ...constraints));
@@ -107,6 +137,10 @@ const createEntityApi = (entityName) => ({
 
   async get(id) {
     if (!id) return null;
+    if (isLocalPreviewEntityMode()) {
+      return getLocalEntityItems(entityName).find((item) => item.id === id) || null;
+    }
+
     const snap = await getDoc(doc(db, entityName, id));
     return snap.exists() ? { id: snap.id, ...snap.data() } : null;
   },
@@ -118,6 +152,13 @@ const createEntityApi = (entityName) => ({
       created_date: data?.created_date || now,
       updated_date: data?.updated_date || now,
     });
+    if (isLocalPreviewEntityMode()) {
+      const items = getLocalEntityItems(entityName);
+      const item = { id: data?.id || makeLocalEntityId(entityName), ...payload };
+      saveLocalEntityItems(entityName, [item, ...items]);
+      return item;
+    }
+
     const docRef = await addDoc(getCollection(entityName), payload);
     return { id: docRef.id, ...payload };
   },
@@ -147,18 +188,36 @@ const createEntityApi = (entityName) => ({
   async update(id, data) {
     if (!id) throw new Error(`${entityName}.update requires an id`);
     const payload = normalizeData({ ...data, updated_date: new Date().toISOString() });
+    if (isLocalPreviewEntityMode()) {
+      const items = getLocalEntityItems(entityName);
+      const next = items.map((item) => item.id === id ? { ...item, ...payload, id } : item);
+      if (!items.some((item) => item.id === id)) next.unshift({ id, ...payload });
+      saveLocalEntityItems(entityName, next);
+      return { id, ...payload };
+    }
+
     await updateDoc(doc(db, entityName, id), payload);
     return { id, ...payload };
   },
 
   async delete(id) {
     if (!id) throw new Error(`${entityName}.delete requires an id`);
+    if (isLocalPreviewEntityMode()) {
+      saveLocalEntityItems(entityName, getLocalEntityItems(entityName).filter((item) => item.id !== id));
+      return { id };
+    }
+
     await deleteDoc(doc(db, entityName, id));
     return { id };
   },
 
   subscribe(callback, errorCallback) {
     if (typeof callback !== 'function') return () => {};
+    if (isLocalPreviewEntityMode()) {
+      callback(sortItems(getLocalEntityItems(entityName), '-created_date'));
+      return () => {};
+    }
+
     return onSnapshot(
       getCollection(entityName),
       (snap) => {

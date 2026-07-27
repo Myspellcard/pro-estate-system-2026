@@ -8,6 +8,34 @@ import DataVisibilityControls from './DataVisibilityControls';
 
 const SECTIONS = [
   {
+    key: 'property_access',
+    icon: '🏘️',
+    labelAr: 'عقاراتنا',
+    labelKu: 'خانووبەرەکانمان',
+    headerColor: 'bg-emerald-700',
+    borderColor: 'border-emerald-200',
+    subSections: [
+      {
+        labelAr: 'إدارة رؤية العقارات عبر المشاريع والفروع',
+        labelKu: 'بەڕێوەبردنی بینینی خانووبەرە بەسەر پڕۆژە و لقەکان',
+        icon: '🔐',
+        widgetItems: [
+          { key: 'can_view_property_access', labelAr: 'إدارة رؤية العقارات عبر المشاريع والفروع - يمكنك منح المستخدمين رؤية عقارات مشاريع خارج فرعهم', labelKu: 'بەڕێوەبردنی بینینی خانووبەرە بەسەر پڕۆژە و لقەکان - دەتوانیت مۆڵەتی بینینی خانووبەرەی پڕۆژەکانی دەرەوەی لقیان بدەیت بە بەکارهێنەران', icon: '🏘️' },
+        ],
+      },
+      {
+        labelAr: 'نطاق العقارات المتاحة لإنشاء العقود',
+        labelKu: 'سنووری خانووبەرە بەردەستەکان بۆ دروستکردنی گرێبەست',
+        icon: '📋',
+        radioItems: [
+          { key: 'contract_properties_scope', value: 'own',    labelAr: 'فقط العقارات التي أضافها المستخدم',                  labelKu: 'تەنها خانووبەرەکانی ئەو بەکارهێنەرە زیادکردوون' },
+          { key: 'contract_properties_scope', value: 'branch', labelAr: 'العقارات المضافة من قبل مستخدمي فرعه',                 labelKu: 'خانووبەرەی زیادکراو لەلایەن بەکارهێنەرانی لقەوە' },
+          { key: 'contract_properties_scope', value: 'all',    labelAr: 'كل العقارات في أي فرع من فروع الشركة',                labelKu: 'هەموو خانووبەرەکان لە هەر لقێکی کۆمپانیا' },
+        ],
+      },
+    ],
+  },
+  {
     key: 'rent',
     icon: '🏠',
     labelAr: 'قسم الإيجار',
@@ -443,6 +471,8 @@ const SECTIONS = [
 // ─── ROLE PRESETS ──────────────────────────────────────────────────────────────
 export const ROLE_PRESETS = {
   admin: {
+    can_view_property_access: true,
+    contract_properties_scope: 'all',
     can_view_properties: true,   can_edit_properties: true,   can_delete_properties: true,
     can_view_tenants: true,      can_edit_tenants: true,      can_delete_tenants: true,
     can_call_tenants: true,      can_whatsapp_tenants: true,
@@ -475,6 +505,8 @@ export const ROLE_PRESETS = {
     dash_maintenance: true, dash_upcoming_payments: true, dash_expiring_contracts: true, dash_overdue: true,
   },
   manager: {
+    can_view_property_access: true,
+    contract_properties_scope: 'all',
     can_view_properties: true,   can_edit_properties: true,   can_delete_properties: false,
     can_view_tenants: true,      can_edit_tenants: true,      can_delete_tenants: false,
     can_call_tenants: true,      can_whatsapp_tenants: true,
@@ -507,6 +539,7 @@ export const ROLE_PRESETS = {
     dash_maintenance: true, dash_upcoming_payments: true, dash_expiring_contracts: true, dash_overdue: true,
   },
   accountant: {
+    contract_properties_scope: 'branch',
     can_view_properties: true,   can_edit_properties: false,  can_delete_properties: false,
     can_view_tenants: true,      can_edit_tenants: false,     can_delete_tenants: false,
     can_call_tenants: true,      can_whatsapp_tenants: true,
@@ -539,6 +572,7 @@ export const ROLE_PRESETS = {
     dash_maintenance: false, dash_upcoming_payments: true, dash_expiring_contracts: true, dash_overdue: true,
   },
   viewer: {
+    contract_properties_scope: 'branch',
     can_view_properties: true,   can_edit_properties: false,  can_delete_properties: false,
     can_view_tenants: true,      can_edit_tenants: false,     can_delete_tenants: false,
     can_call_tenants: false,     can_whatsapp_tenants: false,
@@ -590,10 +624,10 @@ const ALL_PERMS_TRUE = (() => {
 })();
 
 export const ROLES = [
-  { value: 'admin',      labelAr: 'مدير',    labelKu: 'بەڕێوەبەر',   color: 'bg-red-100 text-red-700 border-red-300' },
-  { value: 'manager',    labelAr: 'مشرف',    labelKu: 'سەرپەرشتیار', color: 'bg-blue-100 text-blue-700 border-blue-300' },
-  { value: 'accountant', labelAr: 'محاسب',   labelKu: 'ژمێریار',     color: 'bg-green-100 text-green-700 border-green-300' },
-  { value: 'viewer',     labelAr: 'مشاهد',   labelKu: 'بیننەر',      color: 'bg-gray-100 text-gray-600 border-gray-300' },
+  { value: 'admin',      labelAr: 'مدير النظام', labelKu: 'بەڕێوەبەری سیستەم', color: 'bg-red-100 text-red-700 border-red-300' },
+  { value: 'manager',    labelAr: 'مدير',         labelKu: 'بەڕێوەبەر',        color: 'bg-blue-100 text-blue-700 border-blue-300' },
+  { value: 'accountant', labelAr: 'محاسب',       labelKu: 'ژمێریار',          color: 'bg-green-100 text-green-700 border-green-300' },
+  { value: 'viewer',     labelAr: 'مشاهد',       labelKu: 'بیننەر',           color: 'bg-gray-100 text-gray-600 border-gray-300' },
 ];
 
 // ─── TOGGLE ────────────────────────────────────────────────────────────────────
@@ -687,6 +721,33 @@ function SubSection({ sub, form, toggle, setForm, L }) {
         </div>
       ))}
 
+      {/* radio group items (single-select scope fields like contract_properties_scope) */}
+      {sub.radioItems && sub.radioItems.length > 0 && (
+        <div className="px-4 py-3 border-t border-gray-100 bg-white space-y-1.5">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm">{sub.icon}</span>
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">{L(sub.labelAr, sub.labelKu)}</span>
+          </div>
+          {sub.radioItems.map((opt, i) => {
+            const fieldKey = opt.key;
+            const currentVal = form[fieldKey] || 'branch';
+            const checked = currentVal === opt.value;
+            return (
+              <label key={opt.value} className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors border ${checked ? 'bg-emerald-50 border-emerald-300' : 'bg-gray-50 border-gray-100 hover:bg-gray-100'}`}>
+                <input
+                  type="radio"
+                  name={fieldKey}
+                  checked={checked}
+                  onChange={() => setForm(prev => ({ ...prev, [fieldKey]: opt.value }))}
+                  className="w-4 h-4 shrink-0 accent-emerald-600"
+                />
+                <span className="text-sm text-gray-700 font-medium">{L(opt.labelAr, opt.labelKu)}</span>
+              </label>
+            );
+          })}
+        </div>
+      )}
+
       {/* widget/boolean items */}
       {sub.widgetItems && sub.widgetItems.map((w, i) => (
         <div key={w.key} className={`flex items-center justify-between px-4 py-2.5 border-t border-gray-100 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}`}>
@@ -728,7 +789,7 @@ function SectionBlock({ section, form, toggle, setForm, L, defaultOpen }) {
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────────
 export default function UserPermissionsEditor({ form, setForm, lang }) {
   const L = (ar, ku) => lang === 'ku' ? ku : ar;
-  const applyPreset = (role) => setForm(prev => ({ ...prev, role, ...ALL_PERMS_TRUE }));
+  const applyPreset = (role) => setForm(prev => ({ ...prev, role, ...(role === 'admin' ? ALL_PERMS_TRUE : ROLE_PRESETS[role]) }));
   const toggle = (key) => setForm(prev => ({ ...prev, [key]: !prev[key] }));
 
   return (

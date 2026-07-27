@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/context/LanguageContext';
 import { useBranch } from '@/context/BranchContext';
+import { useUserPermissions } from '@/hooks/useUserPermissions';
 import PageHeader from '@/components/shared/PageHeader';
 import EmptyState from '@/components/shared/EmptyState';
 import PropertyForm from '@/components/properties/PropertyForm';
@@ -28,6 +29,7 @@ import {
 export default function ProjectsView() {
   const { lang } = useLanguage();
   const { activeBranch } = useBranch();
+  const { crossBranchProjectIds = [] } = useUserPermissions();
   const L = (ar, ku) => lang === 'ku' ? ku : ar;
   const [selectedProject, setSelectedProject] = useState(null);
   const [editingProperty, setEditingProperty] = useState(null);
@@ -145,19 +147,24 @@ export default function ProjectsView() {
 
 
   const { data: allProjects = [], isLoading: projectsLoading } = useQuery({
-    queryKey: ['projects', activeBranch?.id],
-    queryFn: () => activeBranch?.id
-      ? firebaseApi.entities.Project.filter({ is_active: true, branch_id: activeBranch.id })
-      : firebaseApi.entities.Project.filter({ is_active: true }),
+    queryKey: ['projects-all-projectsview'],
+    queryFn: () => firebaseApi.entities.Project.filter({ is_active: true }),
   });
-  const projects = allProjects.filter(p => !p.usage_type || p.usage_type === 'rent' || p.usage_type === 'both');
+  // Include cross-branch projects the user has read access to + multi-branch assigned projects
+  const visibleProjects = activeBranch?.id
+    ? allProjects.filter(p => p.branch_id === activeBranch.id || (p.branch_ids || []).includes(activeBranch.id) || crossBranchProjectIds.includes(p.id))
+    : allProjects;
+  const projects = visibleProjects.filter(p => !p.usage_type || p.usage_type === 'rent' || p.usage_type === 'both');
 
-  const { data: properties = [], isLoading: propertiesLoading } = useQuery({
-    queryKey: ['properties', activeBranch?.id],
-    queryFn: () => activeBranch?.id
-      ? firebaseApi.entities.Property.filter({ branch_id: activeBranch.id })
-      : firebaseApi.entities.Property.list(),
+  const { data: propertiesRaw = [], isLoading: propertiesLoading } = useQuery({
+    queryKey: ['properties-all-projectsview'],
+    queryFn: () => firebaseApi.entities.Property.list(),
   });
+  // Include properties from active branch + cross-branch accessible projects + multi-branch project properties
+  const visibleProjectIds = new Set(visibleProjects.map(p => p.id));
+  const properties = activeBranch?.id
+    ? propertiesRaw.filter(p => p.branch_id === activeBranch.id || (p.project_id && (visibleProjectIds.has(p.project_id) || crossBranchProjectIds.includes(p.project_id))))
+    : propertiesRaw;
 
   const { data: labels = [] } = useQuery({
     queryKey: ['property-labels'],

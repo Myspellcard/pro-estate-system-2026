@@ -15,7 +15,7 @@ export default function AdminUsers() {
   const qc = useQueryClient();
   const getErrorMessage = (error, fallback) => {
     if (error?.code === 'permission-denied' || String(error?.message || '').includes('permission')) {
-      return L('رفض Firebase العملية. سجل الدخول بحساب المالك ثم أعد المحاولة، وتأكد من نشر Firestore Rules.', 'Firebase کردارەکەی ڕەتکردەوە. بە هەژماری خاوەن بچۆ ژوورەوە و دووبارە هەوڵ بدە، و دڵنیابە Firestore Rules بڵاوکراوەتەوە.');
+      return L('رفض Base44 العملية. سجل الدخول بحساب المدير ثم أعد المحاولة، وتأكد من نشر صلاحيات Base44.', 'Base44 کردارەکەی ڕەتکردەوە. بە هەژماری بەڕێوەبەر بچۆ ژوورەوە و دووبارە هەوڵ بدە.');
     }
     return error?.message || fallback;
   };
@@ -156,7 +156,7 @@ export default function AdminUsers() {
       setInviteStatus({
         type: 'success',
         msg: result?.localOnly
-          ? L('تم تجهيز الدعوة في المعاينة المحلية. انسخ الرابط لإكمال التجربة، واحفظها من الموقع المنشور لكتابتها في Firebase.', 'بانگهێشتەکە لە پێشبینینی ناوخۆیی ئامادەکرا. لینکەکە کۆپی بکە، و لە ماڵپەڕی بڵاوکراوەوە بیپارێزە بۆ نووسین لە Firebase.')
+          ? L('تم تجهيز الدعوة في المعاينة المحلية. انسخ الرابط لإكمال التجربة، واحفظها من الموقع المنشور لكتابتها في Base44.', 'بانگهێشتەکە لە پێشبینینی ناوخۆیی ئامادەکرا. لینکەکە کۆپی بکە.')
           : L(`تم منح صلاحية الدخول إلى ${normalizedEmail}. انسخ الرابط وأرسله له.`, `ڕێگەپێدانی چوونەژوورەوە درا بە ${normalizedEmail}. لینکەکە کۆپی بکە و بینێرە بۆی.`),
       });
       setInviteEmail(''); setInviteRole('user');
@@ -199,8 +199,8 @@ export default function AdminUsers() {
 
   const handleDeleteUser = (user) => {
     const ok = window.confirm(L(
-      `هل تريد حذف صلاحية دخول ${user.email} من النظام؟ لن يتم حذف حسابه من Firebase Authentication، لكن لن يستطيع الدخول إلى التطبيق.`,
-      `دەتەوێت ڕێگەپێدانی چوونەژوورەوەی ${user.email} لە سیستەم بسڕیتەوە؟ هەژماری Firebase Authentication ناسڕدرێتەوە، بەڵام ناتوانێت بچێتە ناو ئەپەکە.`,
+      `هل تريد حذف صلاحية دخول ${user.email} من النظام؟ لن يتم حذف حسابه من Base44 Auth، لكن لن يستطيع الدخول إلى التطبيق.`,
+      `دەتەوێت ڕێگەپێدانی چوونەژوورەوەی ${user.email} لە سیستەم بسڕیتەوە؟ هەژماری Base44 Auth ناسڕدرێتەوە، بەڵام ناتوانێت بچێتە ناو ئەپەکە.`,
     ));
     if (ok) deleteUserAccess.mutate(user.id);
   };

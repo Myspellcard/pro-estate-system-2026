@@ -4,7 +4,7 @@ import { firebaseApi } from '@/api/firebaseClient';
 import { useLanguage } from '@/context/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Download, CheckCircle2, AlertCircle, Loader2, Database, ArrowLeft, Code2, Upload, RotateCcw, FileJson } from 'lucide-react';
+import { Download, CheckCircle2, AlertCircle, Loader2, Database, ArrowLeft, Code2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const ENTITIES = [
@@ -16,14 +16,6 @@ const ENTITIES = [
   'TaskColor', 'AdvertisementBanner', 'Project', 'ProjectCategory',
   'PropertyLabel', 'PropertyStatusColor', 'Sale', 'SaleContract',
   'SaleContractClause', 'SaleInvoice',
-  // Finance & CRM
-  'Currency', 'Commission', 'SaleOwnerSpent', 'Lead', 'LossReason',
-  // Permissions & notifications
-  'PermissionApprover', 'Notification',
-  // Barcode & translations
-  'BarcodeSettings', 'BarcodeStatus', 'Translation',
-  // Property purposes
-  'PropertyPurpose',
 ];
 
 function downloadJSON(content, filename) {
@@ -48,74 +40,6 @@ export default function Backup() {
 
   const [codeStatus, setCodeStatus] = useState('idle'); // idle | running | done | error
   const [fileCount, setFileCount] = useState(0);
-
-  // ── Restore ──────────────────────────────────────────────────────────────────
-  const [restoreStatus, setRestoreStatus] = useState('idle'); // idle | parsing | preview | running | done | error
-  const [restoreFile, setRestoreFile] = useState(null);
-  const [restoreProgress, setRestoreProgress] = useState({ done: 0, total: 0, current: '', restored: 0 });
-  const [restoreResult, setRestoreResult] = useState([]);
-
-  const handleFileSelect = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setRestoreStatus('parsing');
-    setRestoreResult([]);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const data = JSON.parse(ev.target.result);
-        if (!data.entities || typeof data.entities !== 'object') throw new Error('invalid');
-        const entries = Object.entries(data.entities);
-        const total = entries.reduce((s, [, recs]) => s + (Array.isArray(recs) ? recs.length : 0), 0);
-        setRestoreFile({ entries, total, createdAt: data.created_at, fileName: file.name });
-        setRestoreStatus('preview');
-      } catch {
-        setRestoreStatus('error');
-      }
-    };
-    reader.onerror = () => setRestoreStatus('error');
-    reader.readAsText(file);
-  };
-
-  const resetRestore = () => {
-    setRestoreStatus('idle');
-    setRestoreFile(null);
-    setRestoreResult([]);
-    setRestoreProgress({ done: 0, total: 0, current: '', restored: 0 });
-  };
-
-  const runRestore = async () => {
-    if (!restoreFile) return;
-    setRestoreStatus('running');
-    setRestoreResult([]);
-    let done = 0;
-    let restored = 0;
-    const results = [];
-    for (const [name, records] of restoreFile.entries) {
-      setRestoreProgress({ done, total: restoreFile.total, current: name, restored });
-      const validRecords = Array.isArray(records) ? records : [];
-      if (validRecords.length === 0 || !firebaseApi.entities[name]) {
-        results.push({ entity: name, count: 0, ok: false, error: !firebaseApi.entities[name] ? L('الجدول غير موجود', 'خشتە نەدۆزرایەوە') : L('فارغ', 'بەتاڵ') });
-        continue;
-      }
-      try {
-        let created = 0;
-        for (let i = 0; i < validRecords.length; i += 500) {
-          const batch = validRecords.slice(i, i + 500);
-          const res = await firebaseApi.entities[name].bulkCreate(batch);
-          created += Array.isArray(res) ? res.length : 0;
-          done += batch.length;
-          restored += batch.length;
-          setRestoreProgress({ done, total: restoreFile.total, current: name, restored });
-        }
-        results.push({ entity: name, count: created, ok: true });
-      } catch (err) {
-        results.push({ entity: name, count: 0, ok: false, error: (err?.message || L('فشل', 'سەرنەکەوت')).slice(0, 80) });
-      }
-    }
-    setRestoreResult(results);
-    setRestoreStatus('done');
-  };
 
   // ── Database Backup ──────────────────────────────────────────────────────────
   const fetchAllRecords = async (entityName) => {
@@ -163,7 +87,7 @@ export default function Backup() {
   // ── Source Code Backup ───────────────────────────────────────────────────────
   // Note: JSX source files are not accessible at runtime (browser sandbox).
   // We embed the design tokens (index.css) and config, and list all files.
-  // For full JSX backup, use Firebase GitHub Sync.
+  // For full JSX backup, use your connected Git repository or Base44 project export.
   const runCodeBackup = async () => {
     setCodeStatus('running');
     setFileCount(0);
@@ -229,9 +153,8 @@ Generated: ${new Date().toISOString()}
 JSX/JS source files are NOT included in this ZIP because they run in a browser
 sandbox and cannot access the filesystem at runtime.
 
-To get the FULL source code backup, use:
-  **Firebase Dashboard → Settings → GitHub Sync**
-This will push all source files to a GitHub repo you own.
+To get the FULL source code backup, use your connected Git repository
+or export the source from your Base44 project.
 
 ## What IS included
 - src/compiled_styles.css — all compiled CSS/design tokens from the DOM
@@ -239,7 +162,7 @@ This will push all source files to a GitHub repo you own.
 
 ## Tech Stack
 - React 18 + Vite + Tailwind CSS + shadcn/ui
-- Firebase BaaS (entities, backend functions, automations)
+- Base44 backend (entities, backend functions, auth, file uploads)
 - react-router-dom v6 | @tanstack/react-query
 - RTL + Arabic + Kurdish (Sorani)
 
@@ -441,119 +364,6 @@ ${ENTITIES.join(', ')}
                 </>
               )}
             </Button>
-          </CardContent>
-        </Card>
-
-        {/* ── Restore card ── */}
-        <Card className="border-2 shadow-lg">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-600 flex items-center justify-center shadow-lg">
-                <RotateCcw className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <CardTitle>{L('استعادة البيانات', 'گەڕاندنەوەی داتا')}</CardTitle>
-                <CardDescription>
-                  {L('ارفع ملف النسخة الاحتياطية (JSON) لاستعادة البيانات', 'فایلی بەکاپ (JSON) باربکە بۆ گەڕاندنەوەی داتا')}
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 space-y-1">
-              <p className="font-bold">{L('⚠️ تنبيه', '⚠️ ئاگاداری')}</p>
-              <p>{L('الاستعادة تضيف السجلات إلى الجداول الحالية مع الحفاظ على المعرفات. تأكد من عدم وجود تكرار قبل الاستعادة.', 'گەڕاندنەوە تۆمارەکان زیاد دەکات بۆ خشتەکانی ئێستا لەگەڵ پاراستنی ناسنامە. پێش گەڕاندنەوە دڵنیابە لە نەبوونی دووبارە.')}</p>
-            </div>
-
-            {restoreStatus === 'idle' && (
-              <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-2xl p-8 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/30 transition-all">
-                <Upload className="w-8 h-8 text-emerald-600" />
-                <span className="text-sm font-bold text-slate-700">{L('اختر ملف JSON', 'فایلی JSON هەڵبژێرە')}</span>
-                <span className="text-xs text-slate-400">{L('انقر للاختيار', 'کلیک بکە بۆ هەڵبژاردن')}</span>
-                <input type="file" accept=".json,application/json" className="hidden" onChange={handleFileSelect} />
-              </label>
-            )}
-
-            {restoreStatus === 'parsing' && (
-              <div className="flex items-center justify-center gap-2 py-6 text-slate-500">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span className="text-sm">{L('جاري قراءة الملف...', 'فایل دەخوێنرێتەوە...')}</span>
-              </div>
-            )}
-
-            {restoreStatus === 'preview' && restoreFile && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 bg-slate-50 rounded-xl p-3">
-                  <FileJson className="w-5 h-5 text-slate-600 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-slate-800 truncate">{restoreFile.fileName}</p>
-                    <p className="text-xs text-slate-500">
-                      {L(`${restoreFile.total.toLocaleString()} سجل في ${restoreFile.entries.length} جدول`, `${restoreFile.total.toLocaleString()} تۆمار لە ${restoreFile.entries.length} خشتە`)}
-                    </p>
-                  </div>
-                </div>
-                <div className="max-h-40 overflow-y-auto bg-slate-50 rounded-xl p-3 space-y-1">
-                  {restoreFile.entries.map(([name, recs]) => (
-                    <div key={name} className="flex justify-between text-xs py-1 px-2 bg-white rounded-lg">
-                      <span className="font-semibold text-slate-700">{name}</span>
-                      <span className="text-slate-500">{Array.isArray(recs) ? recs.length : 0}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={resetRestore} className="flex-1 rounded-xl h-11">
-                    {L('إلغاء', 'پاشگەزبوونەوە')}
-                  </Button>
-                  <Button onClick={runRestore} className="flex-1 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white h-11">
-                    <RotateCcw className="w-4 h-4" />
-                    {L('بدء الاستعادة', 'دەستپێکردنی گەڕاندنەوە')}
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {restoreStatus === 'running' && (
-              <div className="space-y-3">
-                <div className="flex justify-between text-xs text-slate-500">
-                  <span>{L('جاري الاستعادة...', 'گەڕاندنەوە...')} {restoreProgress.current}</span>
-                  <span>{Math.round((restoreProgress.done / Math.max(1, restoreProgress.total)) * 100)}%</span>
-                </div>
-                <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full transition-all duration-300" style={{ width: `${Math.round((restoreProgress.done / Math.max(1, restoreProgress.total)) * 100)}%` }} />
-                </div>
-                <p className="text-xs text-slate-400 text-center">
-                  {L(`تم استعادة ${restoreProgress.restored.toLocaleString()} سجل`, `${restoreProgress.restored.toLocaleString()} تۆمار گەڕێندرایەوە`)}
-                </p>
-              </div>
-            )}
-
-            {restoreStatus === 'done' && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl p-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                  <p className="text-sm font-bold text-green-800">{L('اكتملت الاستعادة', 'گەڕاندنەوە تەواوبوو')}</p>
-                </div>
-                <div className="max-h-48 overflow-y-auto space-y-1">
-                  {restoreResult.map((r, i) => (
-                    <div key={i} className={`flex items-center justify-between text-xs py-1.5 px-3 rounded-lg ${r.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                      <span className="font-semibold">{r.entity}</span>
-                      <span>{r.ok ? `✓ ${r.count}` : `✕ ${r.error}`}</span>
-                    </div>
-                  ))}
-                </div>
-                <Button variant="outline" onClick={resetRestore} className="w-full rounded-xl h-11">
-                  {L('استعادة ملف آخر', 'گەڕاندنەوەی فایلێکی تر')}
-                </Button>
-              </div>
-            )}
-
-            {restoreStatus === 'error' && (
-              <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl p-4">
-                <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-                <p className="text-sm text-red-700 flex-1">{L('ملف غير صالح. تأكد من رفع ملف JSON صحيح.', 'فایل نادروستە. دڵنیابە لە فایلی JSON دروست.')}</p>
-                <Button variant="outline" size="sm" onClick={resetRestore}>{L('إعادة', 'هەڵەوەشێوە')}</Button>
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>

@@ -33,7 +33,7 @@ export default function Login() {
       const message = err?.code === 'auth/popup-closed-by-user'
         ? 'تم إغلاق نافذة تسجيل الدخول قبل الإكمال'
         : err?.code === 'auth/unauthorized-domain'
-          ? 'هذا الدومين غير مسموح في Firebase Authentication'
+          ? 'هذا الدومين غير مسموح في Base44 Auth'
           : err?.message || 'حدث خطأ أثناء تسجيل الدخول بواسطة Google';
       setError(message);
     } finally {

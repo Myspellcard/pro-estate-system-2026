@@ -22,6 +22,7 @@ import AdminBarcodeSettings from '@/pages/AdminBarcodeSettings';
 import AdminBarcodeStatuses from '@/pages/AdminBarcodeStatuses';
 import AdminWhatsAppTemplates from '@/pages/AdminWhatsAppTemplates';
 import AdminProjects from '@/pages/AdminProjects';
+import AdminPropertyAccess from '@/pages/AdminPropertyAccess';
 import AdminPropertyLabels from '@/pages/AdminPropertyLabels';
 import AdminProjectCategories from '@/pages/AdminProjectCategories';
 import AdminSaleCategories from '@/pages/AdminSaleCategories';
@@ -131,6 +132,7 @@ const AuthenticatedApp = () => {
       <Route path="/admin/whatsapp-templates" element={<AdminWhatsAppTemplates />} />
       <Route path="/admin/users" element={<AdminUsers />} />
       <Route path="/admin/projects" element={<AdminProjects />} />
+      <Route path="/admin/property-access" element={<AdminPropertyAccess />} />
       <Route path="/admin/property-labels" element={<AdminPropertyLabels />} />
       <Route path="/admin/project-categories" element={<AdminProjectCategories />} />
       <Route path="/admin/sale-categories" element={<AdminSaleCategories />} />

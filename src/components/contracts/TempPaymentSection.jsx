@@ -51,7 +51,7 @@ export default function TempPaymentSection({ contract }) {
   });
   const tempInvoices = contractInvoices.filter(inv => (inv.invoice_number || '').startsWith('TMP-'));
   const refundInvoices = contractInvoices.filter(inv => (inv.invoice_number || '').startsWith('RFD-'));
-  const ownerInvoices = contractInvoices.filter(inv => (inv.invoice_number || '').startsWith('OWN-'));
+  const ownerInvoices = contractInvoices.filter(inv => (inv.invoice_number || '').startsWith('OWN-') && ((inv.notes || '').includes('الدفعة المؤقتة') || (inv.notes || '').includes('پارەی کاتی')));
 
   const [showRecord, setShowRecord] = useState(false);
   const [resolveAction, setResolveAction] = useState(null);

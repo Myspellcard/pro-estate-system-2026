@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { firebaseApi } from '@/api/firebaseClient';
-import { Plus, Pencil, Trash2, Building2, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Building2, X, Check, ChevronDown } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useLanguage } from '@/context/LanguageContext';
 import { useBranch } from '@/context/BranchContext';
 import PageHeader from '@/components/shared/PageHeader';
@@ -21,9 +23,11 @@ export default function AdminProjects() {
   const [showForm, setShowForm] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [formUsageType, setFormUsageType] = useState('both');
+  const [formBranchIds, setFormBranchIds] = useState([]);
   const queryClient = useQueryClient();
   const { lang } = useLanguage();
   const L = (ar, ku) => lang === 'ku' ? ku : ar;
+  const { branches } = useBranch();
   const { activeBranch } = useBranch();
 
   const t = {
@@ -56,7 +60,7 @@ export default function AdminProjects() {
   });
 
   const projects = activeBranch
-    ? allProjects.filter(p => p.branch_id === activeBranch.id)
+    ? allProjects.filter(p => p.branch_id === activeBranch.id || (p.branch_ids || []).includes(activeBranch.id))
     : allProjects;
 
   const createMutation = useMutation({
@@ -78,7 +82,7 @@ export default function AdminProjects() {
     if (editingProject) {
       updateMutation.mutate({ id: editingProject.id, data });
     } else {
-      createMutation.mutate({ ...data, branch_id: activeBranch?.id || '', is_active: true });
+      createMutation.mutate({ ...data, is_active: true });
     }
   };
 
@@ -90,7 +94,7 @@ export default function AdminProjects() {
         title={t.projects}
         subtitle={t.manageProjects}
         actionLabel={t.addProject}
-        onAction={() => { setEditingProject(null); setFormUsageType('both'); setShowForm(true); }}
+        onAction={() => { setEditingProject(null); setFormUsageType('both'); setFormBranchIds(activeBranch?.id ? [activeBranch.id] : []); setShowForm(true); }}
       />
 
       {showForm && (
@@ -111,7 +115,51 @@ export default function AdminProjects() {
             image_url: e.target.image_url.value,
             notes: e.target.notes.value,
             usage_type: formUsageType,
+            branch_id: formBranchIds[0] || '',
+            branch_ids: formBranchIds,
           }); }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2 md:col-span-2">
+              <Label>{L('الفروع', 'لقەکان')} *</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button type="button" variant="outline" role="combobox" className="w-full justify-between font-normal">
+                    <span className="truncate">
+                      {formBranchIds.length === 0
+                        ? L('اختر الفروع...', 'لقەکان هەڵبژێرە...')
+                        : branches.filter(b => formBranchIds.includes(b.id)).map(b => L(b.name, b.name_ku)).join('، ')}
+                    </span>
+                    <ChevronDown className="w-4 h-4 opacity-50 shrink-0" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] min-w-[260px] p-2" align="start">
+                  <div className="max-h-60 overflow-y-auto space-y-1">
+                    {branches.map(b => {
+                      const checked = formBranchIds.includes(b.id);
+                      return (
+                        <label key={b.id} className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer">
+                          <Checkbox checked={checked} onCheckedChange={v => setFormBranchIds(prev => v ? [...new Set([...prev, b.id])] : prev.filter(id => id !== b.id))} />
+                          <span className="text-sm">{L(b.name, b.name_ku)}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-between gap-2 pt-2 mt-1 border-t">
+                    <button type="button" className="text-xs text-muted-foreground hover:text-foreground" onClick={() => setFormBranchIds(branches.map(b => b.id))}>{L('تحديد الكل', 'هەمووی دیاریبکە')}</button>
+                    <button type="button" className="text-xs text-muted-foreground hover:text-foreground" onClick={() => setFormBranchIds([])}>{L('مسح', 'سڕینەوە')}</button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              {formBranchIds.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {branches.filter(b => formBranchIds.includes(b.id)).map(b => (
+                    <Badge key={b.id} className="bg-blue-50 text-blue-700 border-blue-200 cursor-pointer" onClick={() => setFormBranchIds(prev => prev.filter(id => id !== b.id))}>
+                      {L(b.name, b.name_ku)} <X className="w-3 h-3 mr-1" />
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">{L('يمكنك تعيين عدة فروع — مستخدمو تلك الفروع سيتمكنون من إضافة العقارات لهذا المشروع', 'دەتوانیت چەند لق دیاری بکەیت — بەکارهێنەرانی ئەو لقانە دەتوانن خانووبەر بۆ ئەم پڕۆژە زیادبکەن')}</p>
+            </div>
             <div className="space-y-2">
               <Label>{t.name} *</Label>
               <Input name="name" defaultValue={editingProject?.name} required placeholder={L('مثال: حي الأندلس', 'نموونە: گەڕەکی ئەندەلوس')} />
@@ -204,10 +252,23 @@ export default function AdminProjects() {
                   </p>
                 )}
                 {project.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{L(project.description, project.description_ku)}</p>
+                  <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{L(project.description, project.description_ku)}</p>
                 )}
+                {(() => {
+                  const projBranches = (project.branch_ids && project.branch_ids.length ? project.branch_ids : (project.branch_id ? [project.branch_id] : []));
+                  if (projBranches.length === 0) return null;
+                  return (
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {projBranches.map(bid => {
+                        const br = branches.find(b => b.id === bid);
+                        if (!br) return null;
+                        return <Badge key={bid} className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">{L(br.name, br.name_ku)}</Badge>;
+                      })}
+                    </div>
+                  );
+                })()}
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => { setEditingProject(project); setFormUsageType(project.usage_type || 'both'); setShowForm(true); }}>
+                  <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => { setEditingProject(project); setFormUsageType(project.usage_type || 'both'); setFormBranchIds(project.branch_ids && project.branch_ids.length ? project.branch_ids : (project.branch_id ? [project.branch_id] : [])); setShowForm(true); }}>
                     <Pencil className="w-3.5 h-3.5" /> {L('تعديل', 'دەستکاری')}
                   </Button>
                   <AlertDialog>

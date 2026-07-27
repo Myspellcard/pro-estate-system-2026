@@ -12,7 +12,6 @@ import {
 import { useLanguage } from '@/context/LanguageContext';
 import { useBranch } from '@/context/BranchContext';
 import { useAuth } from '@/lib/AuthContext';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
 import LeadForm from '@/components/crm/LeadForm';
 import LeadDetail from '@/components/crm/LeadDetail';
 import LeadCard from '@/components/crm/LeadCard';
@@ -52,7 +51,6 @@ export default function CRM() {
   const { lang } = useLanguage();
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
-  const { crmVisibilityMode, visibleCrmUserIds, crmContactVisibilityMode, visibleCrmContactUserIds } = useUserPermissions();
   const L = (ar, ku) => lang === 'ku' ? ku : ar;
 
   const [showForm, setShowForm] = useState(false);
@@ -77,24 +75,11 @@ export default function CRM() {
   const { data: allUsers = [] } = useQuery({ queryKey: ['users'], queryFn: () => firebaseApi.entities.User.list(), enabled: isAdmin });
   const { data: lossReasons = [] } = useQuery({ queryKey: ['lossReasons'], queryFn: () => firebaseApi.entities.LossReason.list() });
 
-  // CRM visibility: admin sees all; mode controls which leads non-admins see.
+  // Each user only sees leads they created, or leads the admin explicitly shared with them. Admins see everything.
   const visibleLeads = useMemo(() => {
     if (isAdmin) return leads;
-    if (crmVisibilityMode === 'all') return leads;
-    if (crmVisibilityMode === 'own') return leads.filter(l => l.created_by_id === user?.id || (l.shared_with_user_ids || []).includes(user?.id));
-    if (crmVisibilityMode === 'others') return leads.filter(l => l.created_by_id !== user?.id);
-    if (crmVisibilityMode === 'specific') return leads.filter(l => (visibleCrmUserIds || []).includes(l.created_by_id));
-    return leads;
-  }, [leads, isAdmin, user?.id, crmVisibilityMode, visibleCrmUserIds]);
-
-  // CRM contact number visibility per lead
-  const canSeeLeadPhone = (lead) => {
-    if (isAdmin) return true;
-    if (crmContactVisibilityMode === 'all') return true;
-    if (crmContactVisibilityMode === 'own') return lead.created_by_id === user?.id;
-    if (crmContactVisibilityMode === 'specific') return (visibleCrmContactUserIds || []).includes(lead.created_by_id);
-    return false;
-  };
+    return leads.filter(l => l.created_by_id === user?.id || (l.shared_with_user_ids || []).includes(user?.id));
+  }, [leads, isAdmin, user?.id]);
 
   const createMutation = useMutation({
     mutationFn: (data) => firebaseApi.entities.Lead.create({ ...data, branch_id: activeBranch?.id, followups: [] }),
@@ -245,7 +230,6 @@ export default function CRM() {
           onConvert={handleConvert}
           onUpdateSharing={handleUpdateSharing}
           onUpdateLossNote={handleUpdateLossNote}
-          canSeePhone={canSeeLeadPhone(viewing)}
         />
       )}
 
@@ -301,7 +285,6 @@ export default function CRM() {
                   onDelete={(id) => deleteMutation.mutate(id)}
                   lossReasons={lossReasons}
                   onAddLossReason={handleAddLossReason}
-                  canSeePhone={canSeeLeadPhone(lead)}
                 />
               ))}
             </div>
@@ -327,7 +310,6 @@ export default function CRM() {
                         onDelete={(id) => deleteMutation.mutate(id)}
                         lossReasons={lossReasons}
                         onAddLossReason={handleAddLossReason}
-                        canSeePhone={canSeeLeadPhone(lead)}
                       />
                     ))}
                   </div>

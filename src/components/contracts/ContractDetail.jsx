@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import ContactActions from './ContactActions.jsx';
 import { generateSingleContractPDF } from '@/utils/pdfExport';
 import { printOwnerPayment } from '@/utils/printOwnerPayment';
+import { printMaintenanceDeduction } from '@/utils/printMaintenanceDeduction';
 import { format, parseISO, addMonths, addDays, differenceInMonths } from 'date-fns';
 import ContractPrint from './ContractPrint.jsx';
 import PropertyInfoSection from './PropertyInfoSection.jsx';
@@ -43,6 +44,7 @@ export default function ContractDetail({ contract, invoices, onBack }) {
   const { data: contractOwnerTemplates = [] } = useQuery({ queryKey: ['msg-tpl-co'], queryFn: () => firebaseApi.entities.MessageTemplate.filter({ event_type: 'contract_to_owner', is_active: true }) });
   const { data: paymentTenantTemplates = [] } = useQuery({ queryKey: ['msg-tpl-pt'], queryFn: () => firebaseApi.entities.MessageTemplate.filter({ event_type: 'payment_to_tenant', is_active: true }) });
   const { data: paymentOwnerTemplates = [] } = useQuery({ queryKey: ['msg-tpl-po'], queryFn: () => firebaseApi.entities.MessageTemplate.filter({ event_type: 'payment_to_owner', is_active: true }) });
+  const { data: maintenanceRecords = [] } = useQuery({ queryKey: ['maintenance'], queryFn: () => firebaseApi.entities.Maintenance.list() });
 
   const property = properties.find(p => p.id === contract.property_id);
   const tenant = tenants.find(t => t.id === contract.tenant_id);
@@ -144,7 +146,7 @@ export default function ContractDetail({ contract, invoices, onBack }) {
   const handleCreateOwnerPayment = () => {
     const amount = Number(ownerPaymentAmount);
     if (!amount || amount <= 0) return;
-    const invNum = `OWN-${contract.contract_number}-${Date.now().toString().slice(-6)}`;
+    const invNum = `OPAY-${contract.contract_number}-${Date.now().toString().slice(-6)}`;
     createOwnerPaymentMutation.mutate({
       invoice_number: invNum,
       contract_id: contract.id,
@@ -427,6 +429,13 @@ export default function ContractDetail({ contract, invoices, onBack }) {
   // Owner invoices (payments to owner)
   const ownerPaymentInvoices = invoices.filter(i => i.type === 'دفع_للمالك' || i.type_ku === 'پارەدان بۆ خاوەن');
   const totalOwnerPaid = ownerPaymentInvoices.filter(isPaid).reduce((s, i) => s + (i.amount || 0), 0);
+
+  // Maintenance deductions applied to this contract's rent invoices
+  const rentInvoiceIds = new Set(rentInvoices.map(i => i.id));
+  const contractMaintenanceDeductions = maintenanceRecords.filter(m =>
+    m.deduct_from_rent && m.deducted_from_invoice_id && rentInvoiceIds.has(m.deducted_from_invoice_id)
+  );
+  const totalMaintenanceDeductions = contractMaintenanceDeductions.reduce((s, m) => s + (m.cost || 0), 0);
   
   // Current date - must be declared early
   const today = new Date();
@@ -1412,12 +1421,57 @@ export default function ContractDetail({ contract, invoices, onBack }) {
               <p className="text-base font-bold text-blue-900 leading-tight">{totalOwnerPaid.toLocaleString()}</p>
               <p className="text-xs text-blue-600 font-semibold mt-0.5">{currencySymbol}</p>
             </div>
-            <div className={`border rounded-xl p-3 text-center ${(paidAmount - totalOwnerPaid) > 0 ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-200'}`}>
-              <p className={`text-xs font-semibold mb-1 ${(paidAmount - totalOwnerPaid) > 0 ? 'text-amber-600' : 'text-gray-500'}`}>{L('المتبقي للمالك', 'ماوەتە بۆ خاوەن')}</p>
-              <p className={`text-base font-bold leading-tight ${(paidAmount - totalOwnerPaid) > 0 ? 'text-amber-900' : 'text-gray-600'}`}>{(paidAmount - totalOwnerPaid).toLocaleString()}</p>
-              <p className={`text-xs font-semibold mt-0.5 ${(paidAmount - totalOwnerPaid) > 0 ? 'text-amber-600' : 'text-gray-500'}`}>{currencySymbol}</p>
-            </div>
+            {(() => {
+              const remaining = paidAmount - totalOwnerPaid - totalMaintenanceDeductions;
+              const isNegative = remaining < 0;
+              return (
+                <div className={`border rounded-xl p-3 text-center ${isNegative ? 'bg-red-50 border-red-300' : remaining > 0 ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-200'}`}>
+                  <p className={`text-xs font-semibold mb-1 ${isNegative ? 'text-red-600' : remaining > 0 ? 'text-amber-600' : 'text-gray-500'}`}>{L('المتبقي للمالك', 'ماوەتە بۆ خاوەن')}</p>
+                  <p className={`text-base font-bold leading-tight ${isNegative ? 'text-red-900' : remaining > 0 ? 'text-amber-900' : 'text-gray-600'}`}>
+                    {isNegative ? '-' : ''}{Math.abs(remaining).toLocaleString()}
+                    {isNegative && <span className="text-[10px] mr-1 text-red-500">({L('مستحق على الإيجار القادم', 'قەرز لە کرێی داهاتوو')})</span>}
+                  </p>
+                  <p className={`text-xs font-semibold mt-0.5 ${isNegative ? 'text-red-600' : remaining > 0 ? 'text-amber-600' : 'text-gray-500'}`}>{currencySymbol}</p>
+                </div>
+              );
+            })()}
           </div>
+
+          {/* Maintenance deductions from rent — invoice-like printable rows */}
+          {contractMaintenanceDeductions.length > 0 && (
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-2 px-1">
+                <Wrench className="w-4 h-4 text-orange-600" />
+                <p className="text-sm font-bold text-orange-800">{L('خصومات الصيانة من الإيجار', 'داشکانی چاککردنەوە لە کرێ')}</p>
+                <span className="mr-auto text-sm font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-md">{L('الإجمالي', 'کۆی')} {totalMaintenanceDeductions.toLocaleString()} {currencySymbol}</span>
+              </div>
+              <div className="space-y-2">
+                {contractMaintenanceDeductions.map(m => {
+                  const linkedInvoice = rentInvoices.find(i => i.id === m.deducted_from_invoice_id);
+                  return (
+                    <div key={m.id} className="border border-orange-200 rounded-xl p-3 bg-white flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-orange-900 text-sm">MNT-{(m.id || '').slice(-6)}</p>
+                          <Badge variant="outline" className="text-[10px] border-orange-300 text-orange-700 bg-orange-50">{m.category || '—'}</Badge>
+                        </div>
+                        <p className="text-sm text-gray-700 font-medium mt-0.5 truncate">{m.title}</p>
+                        <p className="text-xs text-gray-400">{m.completion_date || m.request_date || ''}{linkedInvoice ? ` • ${L('فاتورة', 'وەسڵ')} ${linkedInvoice.invoice_number}` : ''}</p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="font-bold text-orange-700 text-sm whitespace-nowrap">{(m.cost || 0).toLocaleString()} {currencySymbol}</span>
+                        <Button size="sm" variant="outline" onClick={() => printMaintenanceDeduction({ m, contract, branch, property, invoice: linkedInvoice })} className="text-xs gap-1 text-orange-700 border-orange-300 hover:bg-orange-50 h-7 px-2">
+                          <Printer className="w-3 h-3" />
+                          {L('طباعة', 'چاپ')}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-orange-600 mt-2 px-1">{L('هذه المبالغ مخصومة من الإيجار المستلم قبل التسديد للمالك', 'ئەم بڕانە لە کرێی وەرگیراو داشان کراون پێش پارەدان بۆ خاوەن')}</p>
+            </div>
+          )}
 
           {/* Owner payment history */}
           {ownerPaymentInvoices.length > 0 ? (

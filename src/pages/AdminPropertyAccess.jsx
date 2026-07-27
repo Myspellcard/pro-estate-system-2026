@@ -52,6 +52,29 @@ export default function AdminPropertyAccess() {
     queryFn: () => firebaseApi.entities.UserPermission.list(),
   });
 
+  const getPropertyCreatorName = (property) => {
+    const savedName = property?.created_by_name || property?.created_by_full_name || property?.creator_name || property?.creatorName;
+    if (savedName) return savedName;
+
+    const savedEmail = String(property?.created_by_email || property?.creator_email || '').toLowerCase();
+    const savedIds = [
+      property?.created_by_id,
+      property?.created_by_uid,
+      property?.created_by,
+      property?.creator_id,
+      property?.user_id,
+      property?.uid,
+    ].filter(Boolean).map(String);
+
+    const matchedUser = allUsers.find((item) => {
+      const ids = [item.id, item.uid, item.user_id].filter(Boolean).map(String);
+      const email = String(item.email || '').toLowerCase();
+      return ids.some((id) => savedIds.includes(id)) || (savedEmail && email === savedEmail);
+    });
+
+    return matchedUser?.full_name || matchedUser?.name || matchedUser?.username || matchedUser?.email || savedEmail || '';
+  };
+
   const branchName = (branchId) => {
     const b = allBranches.find(br => br.id === branchId);
     return b ? L(b.name, b.name_ku) : L('بدون فرع', 'بێ لق');
@@ -263,14 +286,14 @@ export default function AdminPropertyAccess() {
                                 key={prop.id}
                                 property={prop}
                                 onView={setViewingProperty}
-                                creatorName={(() => { const u = allUsers.find(u => u.id === prop.created_by_id); return u ? u.full_name : ''; })()}
+                                creatorName={getPropertyCreatorName(prop)}
                               />
                             ) : (
                               <PropertyListItem
                                 key={prop.id}
                                 property={prop}
                                 onView={setViewingProperty}
-                                creatorName={(() => { const u = allUsers.find(u => u.id === prop.created_by_id); return u ? u.full_name : ''; })()}
+                                creatorName={getPropertyCreatorName(prop)}
                               />
                             )
                           ))
@@ -293,14 +316,14 @@ export default function AdminPropertyAccess() {
                           key={prop.id}
                           property={prop}
                           onView={setViewingProperty}
-                          creatorName={(() => { const u = allUsers.find(u => u.id === prop.created_by_id); return u ? u.full_name : ''; })()}
+                          creatorName={getPropertyCreatorName(prop)}
                         />
                       ) : (
                         <PropertyListItem
                           key={prop.id}
                           property={prop}
                           onView={setViewingProperty}
-                          creatorName={(() => { const u = allUsers.find(u => u.id === prop.created_by_id); return u ? u.full_name : ''; })()}
+                          creatorName={getPropertyCreatorName(prop)}
                         />
                       )
                     ))}

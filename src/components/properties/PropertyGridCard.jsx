@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, MapPin, Maximize, BedDouble, Phone, MessageCircle, Pencil, Trash2 } from 'lucide-react';
+import { Building2, MapPin, Maximize, BedDouble, Phone, MessageCircle, Pencil, Trash2, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,7 +16,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 
-export default function PropertyGridCard({ property, onEdit, onDelete, onView }) {
+export default function PropertyGridCard({ property, onEdit, onDelete, onView, creatorName }) {
   const { lang } = useLanguage();
   const L = (ar, ku) => lang === 'ku' ? ku : ar;
   const [statusOpen, setStatusOpen] = useState(false);
@@ -137,6 +137,12 @@ export default function PropertyGridCard({ property, onEdit, onDelete, onView })
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground px-2">
               <MapPin className="w-4 h-4 flex-shrink-0" />
               <span className="truncate max-w-full">{L(property.address, property.address_ku)}</span>
+            </div>
+          )}
+          {creatorName && (
+            <div className="flex items-center justify-center gap-1.5 text-xs text-indigo-600">
+              <User className="w-3.5 h-3.5" />
+              <span className="truncate max-w-[150px]">{creatorName}</span>
             </div>
           )}
         </div>

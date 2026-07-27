@@ -75,11 +75,21 @@ export default function Properties() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['properties'] }),
   });
 
+  const currentUserName = currentUser?.full_name || currentUser?.name || currentUser?.username || currentUser?.email || '';
+
   const handleSubmit = (data) => {
     if (editingProperty) {
       updateMutation.mutate({ id: editingProperty.id, data });
     } else {
-      createMutation.mutate({ ...data, branch_id: activeBranch?.id || '' });
+      createMutation.mutate({
+        ...data,
+        branch_id: activeBranch?.id || '',
+        created_by_id: currentUser?.id || data.created_by_id || null,
+        created_by_uid: currentUser?.uid || data.created_by_uid || null,
+        created_by_email: currentUser?.email || data.created_by_email || '',
+        created_by_name: currentUserName || data.created_by_name || '',
+        created_by_full_name: currentUserName || data.created_by_full_name || '',
+      });
     }
   };
 
@@ -89,9 +99,27 @@ export default function Properties() {
     ? allProperties.filter(p => p.project_id === selectedProject.id)
     : [];
 
-  const getUserById = (userId) => {
-    const user = allUsers.find(u => u.id === userId);
-    return user ? user.full_name : 'Unknown';
+  const getPropertyCreatorName = (property) => {
+    const savedName = property?.created_by_name || property?.created_by_full_name || property?.creator_name || property?.creatorName;
+    if (savedName) return savedName;
+
+    const savedEmail = String(property?.created_by_email || property?.creator_email || '').toLowerCase();
+    const savedIds = [
+      property?.created_by_id,
+      property?.created_by_uid,
+      property?.created_by,
+      property?.creator_id,
+      property?.user_id,
+      property?.uid,
+    ].filter(Boolean).map(String);
+
+    const user = allUsers.find((u) => {
+      const candidates = [u.id, u.uid, u.user_id].filter(Boolean).map(String);
+      const email = String(u.email || '').toLowerCase();
+      return candidates.some((value) => savedIds.includes(value)) || (savedEmail && email === savedEmail);
+    });
+
+    return user?.full_name || user?.name || user?.username || user?.email || savedEmail || '';
   };
 
   return (
@@ -219,6 +247,12 @@ export default function Properties() {
                   )}
                   <div className="p-4">
                   <h4 className="font-bold text-base mb-2">{L(prop.name, prop.name_ku)}</h4>
+                  {getPropertyCreatorName(prop) && (
+                    <div className="mb-2 inline-flex items-center gap-1.5 rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700">
+                      <User className="w-3 h-3" />
+                      <span className="truncate max-w-[150px]">{getPropertyCreatorName(prop)}</span>
+                    </div>
+                  )}
                   {prop.monthly_rent > 0 && (
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-sm font-bold text-secondary">{prop.monthly_rent?.toLocaleString()}</span>

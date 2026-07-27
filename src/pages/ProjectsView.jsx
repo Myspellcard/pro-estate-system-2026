@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { firebaseApi } from '@/api/firebaseClient';
 import { ArrowRight, Building2, Tag, Home, MapPin, Layers, Pencil, LayoutGrid, FolderOpen, ListFilter, Download, Phone, MessageCircle, X, Check, Search, BedDouble, Maximize, User, Smartphone } from 'lucide-react';
@@ -72,8 +72,13 @@ export default function ProjectsView() {
   const [searchCategory, setSearchCategory] = useState('');
   const [searchStatuses, setSearchStatuses] = useState([]);
   const [includeAllProperties, setIncludeAllProperties] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    firebaseApi.auth.me().then(setCurrentUser).catch(() => {});
+  }, []);
 
   const bulkLabelMutation = useMutation({
     mutationFn: async ({ catProps, labelId, add }) => {
@@ -121,6 +126,8 @@ export default function ProjectsView() {
     },
   });
 
+  const currentUserName = currentUser?.full_name || currentUser?.name || currentUser?.username || currentUser?.email || '';
+
   const createPropertyMutation = useMutation({
     mutationFn: (data) => firebaseApi.entities.Property.create(data),
     onSuccess: () => {
@@ -140,6 +147,11 @@ export default function ProjectsView() {
         project_id: selectedProject?.id || formData.project_id || null,
         usage_type: formData.usage_type || 'rent',
         branch_id: activeBranch?.id || null,
+        created_by_id: currentUser?.id || formData.created_by_id || null,
+        created_by_uid: currentUser?.uid || formData.created_by_uid || null,
+        created_by_email: currentUser?.email || formData.created_by_email || '',
+        created_by_name: currentUserName || formData.created_by_name || '',
+        created_by_full_name: currentUserName || formData.created_by_full_name || '',
       });
     }
   };
@@ -188,9 +200,27 @@ export default function ProjectsView() {
     queryFn: () => firebaseApi.entities.User.list(),
   });
 
-  const getUserById = (userId) => {
-    const user = allUsers.find(u => u.id === userId);
-    return user ? user.full_name : 'Unknown';
+  const getPropertyCreatorName = (property) => {
+    const savedName = property?.created_by_name || property?.created_by_full_name || property?.creator_name || property?.creatorName;
+    if (savedName) return savedName;
+
+    const savedEmail = String(property?.created_by_email || property?.creator_email || '').toLowerCase();
+    const savedIds = [
+      property?.created_by_id,
+      property?.created_by_uid,
+      property?.created_by,
+      property?.creator_id,
+      property?.user_id,
+      property?.uid,
+    ].filter(Boolean).map(String);
+
+    const user = allUsers.find((u) => {
+      const candidates = [u.id, u.uid, u.user_id].filter(Boolean).map(String);
+      const email = String(u.email || '').toLowerCase();
+      return candidates.some((value) => savedIds.includes(value)) || (savedEmail && email === savedEmail);
+    });
+
+    return user?.full_name || user?.name || user?.username || user?.email || savedEmail || '';
   };
 
   // Helper to check if property is rented (has active contract OR status "مؤجر")
@@ -881,7 +911,7 @@ export default function ProjectsView() {
                                             }`}
                                           >
                                             <MessageCircle className={`w-2.5 h-2.5 ${prop.owner_phone ? 'text-emerald-500' : 'text-muted-foreground'}`} />
-                                            <span className="truncate max-w-[100px]">{getUserById(prop.created_by_id)}</span>
+                                            <span className="truncate max-w-[100px]">{getPropertyCreatorName(prop) || L('غير محدد', 'دیاری نەکراو')}</span>
                                           </a>
                                         </div>
                                         <div className="flex items-center justify-center gap-2 flex-wrap">
@@ -1026,7 +1056,7 @@ export default function ProjectsView() {
                                       }`}
                                     >
                                       <MessageCircle className={`w-2.5 h-2.5 ${prop.owner_phone ? 'text-emerald-500' : 'text-muted-foreground'}`} />
-                                      <span className="truncate max-w-[100px]">{getUserById(prop.created_by_id)}</span>
+                                      <span className="truncate max-w-[100px]">{getPropertyCreatorName(prop) || L('غير محدد', 'دیاری نەکراو')}</span>
                                     </a>
                                   </div>
                                   <div className="flex items-center justify-center gap-2">

@@ -7,6 +7,15 @@ import { Button } from '@/components/ui/button';
 import PrintSettingsEditor from '@/components/admin/PrintSettingsEditor';
 import RentalPermissionLetterEditor from '@/components/admin/RentalPermissionLetterEditor';
 
+const createDefaultPrintSettings = () => ({
+  print_rent_contract: {},
+  print_rent_invoice: {},
+  print_insurance_invoice: {},
+  print_other_invoice: {},
+  print_sale_contract: {},
+  print_rental_permission: {},
+});
+
 export default function AdminPrintSettings() {
   const { lang } = useLanguage();
   const L = (a, ku) => lang === 'ku' ? ku : a;
@@ -14,13 +23,13 @@ export default function AdminPrintSettings() {
   const [activePrint, setActivePrint] = useState('print_rent_contract');
   const [saved, setSaved] = useState(false);
 
-  const { data: settingsList = [] } = useQuery({
+  const { data: settingsList = [], isLoading: settingsLoading } = useQuery({
     queryKey: ['app_settings'],
     queryFn: () => firebaseApi.entities.AppSettings.list(),
   });
 
   const existing = settingsList.find(s => s.key === 'default');
-  const [form, setForm] = useState(null);
+  const [form, setForm] = useState(createDefaultPrintSettings);
   const [formInitialized, setFormInitialized] = useState(false);
 
   React.useEffect(() => {
@@ -34,19 +43,11 @@ export default function AdminPrintSettings() {
         print_rental_permission: existing.print_rental_permission || {},
       });
       setFormInitialized(true);
-    } else if (!existing && settingsList.length > 0 && !formInitialized) {
-      // No existing record yet, initialize with empty
-      setForm({
-        print_rent_contract: {},
-        print_rent_invoice: {},
-        print_insurance_invoice: {},
-        print_other_invoice: {},
-        print_sale_contract: {},
-        print_rental_permission: {},
-      });
+    } else if (!settingsLoading && !existing && !formInitialized) {
+      setForm(createDefaultPrintSettings());
       setFormInitialized(true);
     }
-  }, [existing, settingsList, formInitialized]);
+  }, [existing, settingsLoading, formInitialized]);
 
   const saveMutation = useMutation({
     mutationFn: (data) => existing
@@ -138,10 +139,6 @@ export default function AdminPrintSettings() {
   ];
 
   const activeSection = printSections.find(s => s.id === activePrint);
-
-  if (!form) {
-    return <div className="p-8 flex items-center justify-center"><div className="w-6 h-6 border-2 border-[#1a2744] border-t-transparent rounded-full animate-spin"></div></div>;
-  }
 
   return (
     <div className="p-4 md:p-6 max-w-5xl" dir="rtl">
